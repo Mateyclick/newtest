@@ -1,0 +1,3 @@
+id,fen,solution_moves_san,turn,category,difficulty_level,description,source_game_pgn,event_name,white_player,black_player,white_elo,black_elo,created_by_user_id,is_active,created_at,updated_at
+1a07f6fc-bf60-45b4-864a-627ec89bb983,OTRO_FEN_AQUI,OTRA_SOLUCION_SAN_AQUI,b,Jaque Mate en 2,Fácil,Descripción del segundo problema.,,,,,,,f18c0d01-aabd-4c71-ba24-9854553f354c,true,2025-05-16 18:09:06.069317+00,2025-05-16 18:09:06.069317+00
+24e945cf-2956-488d-b07b-49852cbd7e2d,r1b1k1nr/5Nbp/n3p1p1/2p5/qp2PP2/5N2/P1PB2PP/1KQ2B1R w - - 0 1,1. Bb5+ Qxb5 2. Nd6+ Kf8 3. Nxb5,w,Sacrificio,Medio,Un interesante problema de táctica con tema de sacrificio de pieza.,,,,,,,f18c0d01-aabd-4c71-ba24-9854553f354c,true,2025-05-16 18:09:33.525468+00,2025-05-16 18:09:33.525468+00

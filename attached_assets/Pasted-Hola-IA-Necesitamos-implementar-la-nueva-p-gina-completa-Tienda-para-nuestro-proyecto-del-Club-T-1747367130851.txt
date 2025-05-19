@@ -1,0 +1,129 @@
+Hola IA,
+
+Necesitamos implementar la nueva página completa 'Tienda' para nuestro proyecto del Club Trebejos. Ya conoces la arquitectura y tecnologías del sitio (React, TypeScript, Tailwind CSS, shadcn/ui, lucide-react, react-router-dom, @tanstack/react-query).
+
+Objetivo Principal:
+
+
+
+Crear una página /tienda accesible desde el menú de navegación. Esta página mostrará productos del club obtenidos desde una API de SheetDB, y cada producto enlazará a MercadoLibre Uruguay para la compra.
+
+Endpoint de la API de Productos (SheetDB):
+
+
+
+https://sheetdb.io/api/v1/349noqnzwop2z
+
+Requisitos Esenciales (¡Máxima Prioridad!):
+
+
+
+No Romper la Responsividad: La página /tienda debe ser 100% responsiva.
+
+Respetar el Estilo y Coherencia Visual: Utiliza los componentes, iconos, colores, tipografía y patrones de Tailwind CSS establecidos en el proyecto. Usa la función cn de utils.ts para clases.
+
+Diseño "Bonito" y Profesional: La página y la presentación de productos deben ser estéticamente agradables.
+
+Integración Segura: No afectar funcionalidades existentes.
+
+Instrucciones Detalladas para la Nueva Página 'Tienda':
+
+
+
+Navegación y Enrutamiento (Modificaciones a archivos existentes):
+
+App.tsx: Añade la ruta /tienda que renderice el nuevo componente de página Store.tsx.
+
+Navbar.tsx: Añade el enlace "Tienda" al menú principal (escritorio y móvil), apuntando a /tienda, siguiendo el estilo existente.
+
+Definición de Tipo para Productos (src/lib/types/product.ts - NUEVO ARCHIVO):
+
+Crea esta interfaz Product:TypeScript
+
+
+
+export interface Product {
+
+  id: string | number; // Corresponderá a la columna 'ID' del Excel
+
+  name: string;        // Columna 'Name'
+
+  description: string; // Columna 'Description'
+
+  imageUrl: string;    // Columna 'ImageURL' (será una URL externa completa)
+
+  price: number;       // Columna 'Price' (asegurar que sea numérico)
+
+  currency: string;    // Columna 'Currency'
+
+  mercadolibreUrl: string; // Columna 'MercadoLibreURL'
+
+  stock: number;       // Columna 'Stock' (asegurar que sea numérico, 0 para agotado)
+
+  category?: 'Indumentaria' | 'Accesorios' | 'Libros' | 'Juegos' | 'Otros'; // Columna 'Category'
+
+  tags?: string[];      // Columna 'Tags' (si es string separado por comas, convertir a array)
+
+  featured?: boolean;   // Columna 'Featured' (si es string "TRUE"/"FALSE", convertir a booleano)
+
+}
+
+Página de la Tienda (src/pages/Store.tsx - NUEVO ARCHIVO):
+
+Debe incluir Navbar y Footer.
+
+Añade un encabezado de página (título "Tienda del Club", descripción breve), similar a otras páginas como /cursos.
+
+Obtención y Transformación de Datos:Utiliza useQuery de @tanstack/react-query para obtener los datos de productos desde el endpoint: https://sheetdb.io/api/v1/349noqnzwop2z.
+
+La función de fetching asociada a useQuery debe:Realizar la petición Workspace al endpoint.
+
+Verificar que la respuesta sea exitosa.
+
+Parsear el JSON. SheetDB devolverá un array de objetos donde las claves son los nombres de las columnas de tu Excel (ej. item['ID'], item['Name'], item['ImageURL'], item['MercadoLibreURL'], etc.).
+
+Transformar cada objeto del array de la API al tipo Product. Esto implica:Mapear los nombres de columna a las propiedades de la interfaz Product.
+
+Convertir Price y Stock a tipo number (SheetDB puede devolverlos como strings).
+
+Convertir Featured a boolean (ej. de "TRUE"/"FALSE" o 1/0).
+
+Si Tags viene como un string separado por comas, convertirlo a string[].
+
+Asegurar que imageUrl se use tal cual (como URL externa).
+
+Manejar posibles errores durante la transformación de cada ítem.
+
+Manejar los estados isLoading y error de useQuery mostrando mensajes apropiados (spinner, mensaje de error).
+
+Pasa los productos transformados (Product[]) al componente StoreSection.
+
+Componente de Sección para la Tienda (src/components/StoreSection.tsx - NUEVO ARCHIVO):
+
+Recibe products: Product[] como props.
+
+Layout: Cuadrícula responsiva (ej. 1 col en móvil, 2-3 en tablet, 3-4 en escritorio), inspirada en CoursesSection.tsx.
+
+Tarjeta de Producto (por cada producto):Usa Card de shadcn/ui, con un estilo visual similar a las tarjetas de CoursesSection.tsx.
+
+Contenido:imageUrl (URL externa; implementa un placeholder genérico o lógica onError si la imagen externa falla).
+
+name del producto (usando <CardTitle>).
+
+category (opcional, con Badge de shadcn/ui).
+
+description corta.
+
+price y currency.
+
+Badge para stock: "Disponible" (o Stock: ${product.stock}) si product.stock > 0, o "Agotado" (con variant="destructive") si product.stock === 0.
+
+Botón "Ver en MercadoLibre": Usa Button de shadcn/ui con ícono ShoppingCart (lucide-react). Abre product.mercadolibreUrl en nueva pestaña. Deshabilitar y cambiar texto (ej. "No Disponible") si product.stock === 0.
+
+Productos: La tienda ofrecerá variedad (remeras, buzos, tazas, llaveros, juegos de ajedrez, etc.). Las imágenes son URLs externas.
+
+
+
+
+
+Por favor, genera el código para los nuevos archivos y las modificaciones necesarias, prestando especial atención a la correcta obtención y transformación de datos desde el endpoint de SheetDB y a los requisitos de calidad. ¡Gracias!"

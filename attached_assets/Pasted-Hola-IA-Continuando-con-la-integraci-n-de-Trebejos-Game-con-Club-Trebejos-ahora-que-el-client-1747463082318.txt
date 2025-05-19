@@ -1,0 +1,60 @@
+Hola IA,
+
+Continuando con la integración de "Trebejos Game" con "Club Trebejos", ahora que el cliente de "Club Trebejos" está preparado para enviar un token JWT de Supabase al conectar, necesitamos modificar el backend de "Trebejos Game" (server/index.js) para que valide este token.
+
+Archivo a Modificar: server/index.js (de "Trebejos Game")
+
+Tarea Específica:
+Implementar un middleware de autenticación para el servidor Socket.IO que intercepte las nuevas conexiones, valide el token JWT de Supabase enviado por el cliente, y adjunte la información del usuario al objeto socket.
+
+Requisitos Detallados para la Modificación de server/index.js:
+
+Dependencia jsonwebtoken:
+
+Añade jsonwebtoken a las dependencias en package.json si aún no está, e instálala. Importa el módulo (const jwt = require('jsonwebtoken'); o import jwt from 'jsonwebtoken';).
+Middleware de Socket.IO (io.use()):
+
+Implementa io.use(async (socket, next) => { ... }); antes de io.on('connection', ...).
+Obtención del Token: El token JWT vendrá en socket.handshake.auth.token.
+Manejo de Token Ausente: Si no hay token, rechaza la conexión: next(new Error('AUTH_TOKEN_MISSING'));.
+Verificación del Token:
+Usa jwt.verify(token, process.env.SUPABASE_JWT_SECRET, (err, decoded) => { ... }). El SUPABASE_JWT_SECRET será una variable de entorno que configuraremos en Render.
+Si err (error en verificación): rechaza la conexión next(new Error('AUTH_TOKEN_INVALID')); y loguea el error.
+Si decoded (token válido): adjunta la información del usuario al socket: socket.user = { id: decoded.sub, email: decoded.email /* , etc. */ };. Llama a next().
+Uso de socket.user en io.on('connection', ...):
+
+Al inicio del handler io.on('connection', (socket) => { ... }), loguea la conexión de un usuario autenticado: console.log('[Server] Authenticated user connected:', socket.user.id, 'Socket ID:', socket.id);.
+Por ahora, no es necesario refactorizar toda la lógica de gameSessions para usar socket.user.id como clave. Solo asegúrate de que socket.user esté disponible.
+Ejemplo Conceptual del Middleware:
+
+JavaScript
+
+// const jwt = require('jsonwebtoken');
+// const SUPABASE_JWT_SECRET = process.env.SUPABASE_JWT_SECRET;
+
+io.use(async (socket, next) => {
+  const token = socket.handshake.auth.token;
+  if (!token) {
+    console.error('[Server Auth] No token provided. Connection rejected.');
+    return next(new Error('AUTH_TOKEN_MISSING'));
+  }
+  try {
+    const decoded = jwt.verify(token, SUPABASE_JWT_SECRET);
+    socket.user = { id: decoded.sub, email: decoded.email };
+    console.log(`[Server Auth] Token verified for user ID: ${socket.user.id}`);
+    next();
+  } catch (err) {
+    console.error("[Server Auth] Token verification failed:", err.message);
+    return next(new Error('AUTH_TOKEN_INVALID'));
+  }
+});
+Por favor, proporciona el código modificado del archivo server/index.js."
+
+Matías:
+
+Asegúrate de que la IA de Replit ahora tenga cargado el código de "Trebejos Game" (específicamente el server/index.js).
+Pásale este nuevo prompt.
+No olvides pasarle también el contenido actual de server/index.js de "Trebejos Game".
+Una vez que el servidor esté modificado, podremos probar el flujo completo: "Club Trebejos" (cliente) conectándose al servidor de "Trebejos Game" (ahora con autenticación JWT).
+
+¡Buen trabajo de la IA hasta ahora! Vamos por el servidor.

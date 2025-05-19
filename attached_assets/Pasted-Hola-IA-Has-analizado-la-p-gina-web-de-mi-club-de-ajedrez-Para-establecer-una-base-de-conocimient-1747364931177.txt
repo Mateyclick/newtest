@@ -1,0 +1,30 @@
+Hola IA,
+
+Has analizado la página web de mi club de ajedrez. Para establecer una base de conocimiento compartida y planificar futuras mejoras, te solicito un informe detallado sobre la página actual. Por favor, estructura tu respuesta de la siguiente manera:
+
+Análisis de Funcionalidades Existentes (Lo que la página SÍ HACE):
+
+Enumera y describe cada una de las funcionalidades que la página ofrece actualmente a los usuarios (por ejemplo, visualización de noticias, calendario de torneos, galería de fotos, formulario de contacto, registro de miembros, resultados de partidas, etc.).
+Indica el propósito principal de cada funcionalidad.
+Si es posible, evalúa brevemente la efectividad o completitud de cada funcionalidad identificada.
+Identificación de Funcionalidades Ausentes o Limitaciones (Lo que la página NO HACE o podría hacer MEJOR):
+
+Basándote en tu conocimiento sobre sitios web para organizaciones o clubes (especialmente deportivos o de ajedrez), ¿qué funcionalidades consideras que faltan y podrían aportar valor?
+¿Identificas alguna limitación en las funcionalidades actuales que impida una mejor experiencia de usuario o administración?
+¿Hay características que parecen estar a medio implementar o que no funcionan como se esperaría?
+Desglose de la Composición y Estructura de la Página (Cómo ESTÁ CONSTRUIDA):
+
+Describe la arquitectura general de la información: ¿Cuáles son las secciones o páginas principales (Ej: Inicio, Sobre Nosotros, Miembros, Eventos, Aprender, Contacto)?
+Detalla la estructura del menú de navegación principal y cualquier sub-navegación.
+Identifica los componentes o bloques de contenido clave que se repiten a lo largo del sitio (Ej: encabezado, pie de página, barras laterales, tarjetas de información, banners).
+Si puedes inferir elementos sobre el diseño: ¿Qué paleta de colores principal detectas? ¿Cuál es el estilo tipográfico predominante? ¿El diseño es responsivo?
+(Opcional, si la IA tiene la capacidad) ¿Puedes identificar tecnologías subyacentes obvias (CMS como WordPress, Joomla; frameworks de frontend como Bootstrap, React, Angular; o si es HTML estático)?
+Por favor, presenta esta información de manera clara, concisa y bien organizada, utilizando encabezados para cada sección y subsección, y listas de viñetas donde sea apropiado. Este informe será crucial para nuestra planificación.
+
+¡Muchas gracias!"
+Mis consideraciones sobre este prompt:
+
+Exhaustividad: Intenta cubrir los aspectos clave de "qué hace", "qué no hace" y "cómo está hecha".
+Claridad: Usa un lenguaje directo y pide una estructura específica para la respuesta, lo que nos facilitará mucho la vida.
+Perspectiva de Valor: Anima a la IA a pensar no solo en lo que hay, sino en lo que debería haber para un club de ajedrez.
+Preparación para el Futuro: Establece que esta información es la base para el trabajo que haremos.

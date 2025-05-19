@@ -1,0 +1,49 @@
+¡Fantástico trabajo con la vista de jugador en `GamePage.tsx`! La lógica para unirse a sesiones (tanto por lista como por ID) y los listeners de `available_sessions_update` y `error` están muy bien implementados.
+
+Ahora, vamos a pulir el renderizado una vez que el jugador se ha unido a una sesión y a asegurarnos de que los datos correctos fluyan:
+
+**Tarea para `GamePage.tsx` - Completar Sección del Jugador (cuando `view === 'player_view'` Y `gameState.sessionId` existe):**
+
+1.  **Importar Componentes Faltantes:**
+    * Asegúrate de importar `WaitingRoom` desde ` '@/components/game/WaitingRoom'` (o la ruta correcta).
+    * Asegúrate de importar `ResultsView` desde ` '@/components/game/ResultsView'`.
+
+2.  **Renderizado Final de la Vista de Jugador Unido:**
+    * Ya tienes la estructura:
+        ```typescript
+        // return (
+        //   <div className="container mx-auto px-4 py-8 space-y-6">
+        //     <GameSessionInfo ... />
+        //     {showResultsView && resultsData ? (
+        //       <ResultsView ... /> // Asegúrate que las props sean correctas
+        //     ) : gameState.puzzleActive && currentPuzzle.position ? (
+        //       <PuzzleView ... />
+        //     ) : (
+        //       // AQUÍ VA EL WAITING ROOM
+        //     )}
+        //   </div>
+        // );
+        ```
+    * En el `else` final (cuando no se muestran resultados ni hay un puzzle activo), renderiza `<WaitingRoom players={sessionPlayers} />`.
+
+3.  **Actualización de Estado al Unirse y Durante el Juego (para el Jugador):**
+    * **En el listener `socket.on('session_joined', ({ sessionId, players, currentPuzzleData, currentEndTime, isAdmin }) => { ... });` (o como el servidor lo emita):**
+        * Asegúrate de que este evento (que el servidor emite cuando un jugador se une con éxito) provea:
+            * `sessionId`: para `gameState.sessionId`.
+            * `players`: para `sessionPlayers`.
+            * `currentPuzzleData` (si un puzzle está activo): para `currentPuzzle`.
+            * `currentEndTime` (si un puzzle está activo): para `gameState.endTime`.
+            * `puzzleActiveState` (booleano, si un puzzle está activo): para `gameState.puzzleActive`.
+        * `GamePage.tsx` debe actualizar todos estos estados correspondientes al recibir `session_joined`.
+    * **Los listeners `player_joined` y `player_left`** (que ya tienes) deben seguir actualizando `sessionPlayers` para que `WaitingRoom` (y `PlayerList` si se usa) muestre la lista correcta de participantes.
+    * **El listener `puzzle_launched`** (que ya tienes) es el que cambiará el estado para que `PuzzleView` se muestre al jugador.
+    * **El listener `results_revealed`** (que ya tienes) es el que cambiará el estado para que `ResultsView` se muestre al jugador.
+
+**Objetivo de este Paso:**
+Que la vista del jugador sea completamente funcional después de unirse a una sesión:
+1. Ve `WaitingRoom` si no hay puzzle.
+2. Transicione a `PuzzleView` cuando se lance un puzzle.
+3. Transicione a `ResultsView` cuando se revelen los resultados.
+4. Vea `GameSessionInfo` y la lista de jugadores actualizada en `WaitingRoom`.
+
+Esto debería dejar el flujo básico del juego (admin crea, jugador se une, juegan, ven resultados) casi completo en el frontend.

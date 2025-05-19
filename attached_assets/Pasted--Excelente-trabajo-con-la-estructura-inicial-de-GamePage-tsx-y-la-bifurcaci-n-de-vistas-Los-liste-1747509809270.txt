@@ -1,0 +1,67 @@
+¡Excelente trabajo con la estructura inicial de `GamePage.tsx` y la bifurcación de vistas! Los listeners de socket y los manejadores de eventos básicos son un gran comienzo.
+
+Ahora, vamos a detallar la funcionalidad cuando un "socio" ha elegido "Crear sala de problemas como anfitrión" (es decir, cuando `view === 'admin_view'`, o la condición equivalente que estés usando para mostrar la vista de administrador).
+
+Queremos replicar y mejorar la experiencia del `AdminDashboard.tsx` original de "Trebejos Game", utilizando los componentes que ya adaptaste (`ChessPuzzleSetup`, `GameControls`, `GameSessionInfo`, `PlayerList`).
+
+**Tarea para `GamePage.tsx` - Sección de Administrador (cuando `isSocio` es true y `view === 'admin_view'`):**
+
+1.  **Estado Adicional Necesario en `GamePage.tsx` (para la vista de admin):**
+    * `numPuzzlesInput: number` (por defecto 3, para que el admin elija cuántos problemas tendrá la sesión).
+    * `puzzlesConfig: PuzzleState[]` (array para guardar la configuración de cada puzzle de la sesión, donde `PuzzleState` es `{ position: string, mainLine: string, timer: number, points: number }`).
+    * `currentPuzzleIndexForSetup: number` (para saber qué puzzle del array `puzzlesConfig` se está editando, por defecto 0).
+    * `sessionPlayers: Player[]` (donde `Player` es `{ id: string, nickname: string, score: number }`, para `PlayerList.tsx`).
+    * `playerProgressView: Record<string, PlayerProgressInfo>` (similar al `playerProgress` del `AdminDashboard` original, para mostrar el estado de cada jugador en el puzzle activo).
+    * `showResultsView: boolean` (para controlar si se muestra `ResultsView.tsx`).
+    * `resultsData: ResultsData | null` (para pasar a `ResultsView.tsx`, donde `ResultsData` sería `{ solution: string, leaderboard: Player[], playerResults: any[] }`).
+
+2.  **Flujo Lógico y Renderizado Condicional dentro de la Vista de Admin:**
+
+    * **Si `!gameState.sessionId` (no hay sesión activa creada por este admin):**
+        * Mostrar un input de tipo `number` para que el admin ingrese el "Número de Problemas" (vinculado al estado `numPuzzlesInput`).
+        * Mostrar el botón "Crear Sesión" (que ya tienes, `handleCreateSession`).
+            * **Modificar `handleCreateSession`**: Debe emitir `socket?.emit('create_session', { numPuzzles: numPuzzlesInput });`.
+            * **Modificar el listener `session_created`**: Cuando este evento se reciba del servidor con `{ sessionId }`, además de guardar el `sessionId` en `gameState`, también debes:
+                * Inicializar `puzzlesConfig` como un array de `numPuzzlesInput` objetos `PuzzleState` con valores por defecto (FEN de solo reyes, línea vacía, timer 60, points 3).
+                * Setear `currentPuzzleIndexForSetup = 0`.
+                * Setear `sessionPlayers = []`.
+                * Setear `playerProgressView = {}`.
+
+    * **Si `gameState.sessionId` existe (sesión creada y activa):**
+        * **Mostrar `<GameSessionInfo />`:** Pásale las props correctas (`sessionId` de `gameState`, `currentPuzzleIndex` (que podría ser `currentPuzzleIndexForSetup` o un estado de "puzzle en juego"), `totalPuzzles` de `numPuzzlesInput`, `puzzleActive` de `gameState`, `showResultsView`).
+        * **Mostrar `<ChessPuzzleSetup />`:**
+            * `puzzle={puzzlesConfig[currentPuzzleIndexForSetup]}` (asegúrate de que `puzzlesConfig` y el índice sean válidos).
+            * `onUpdate={(updatedPuzzleConfig) => { ... }}`: Este callback debe actualizar el `puzzlesConfig[currentPuzzleIndexForSetup]` en el estado de `GamePage.tsx`.
+            * `disabled={gameState.puzzleActive || showResultsView}`.
+        * **Mostrar `<GameControls />`:**
+            * `puzzleActive={gameState.puzzleActive}`.
+            * `showResults={showResultsView}`.
+            * `isLastPuzzle={currentPuzzleIndexForSetup === numPuzzlesInput - 1}`.
+            * `onLaunch={handleLaunchPuzzle}` (ya lo tienes, asegúrate que use `puzzlesConfig[currentPuzzleIndexForSetup]` para obtener los datos del puzzle a lanzar, o el índice).
+            * `onReveal={handleRevealResults}`: Esta nueva función en `GamePage` emitirá `socket?.emit('reveal_results', { sessionId: gameState.sessionId });`.
+            * `onNext={handleNextPuzzle}`: Esta nueva función en `GamePage` incrementará `currentPuzzleIndexForSetup`, reseteará `gameState.puzzleActive = false`, `showResultsView = false`, y podría emitir `next_puzzle` si el servidor lo requiere.
+            * `onReset={handleResetSession}`: Esta nueva función reseteará todos los estados relevantes de `GamePage` a sus valores iniciales para permitir crear una nueva sesión.
+        * **Mostrar `<PlayerList players={sessionPlayers} />`**.
+        * **(Opcional por ahora, pero a tener en cuenta) Mostrar el "Progreso Jugadores":** Una sección que itere sobre `sessionPlayers` y muestre la información de `playerProgressView` para cada uno, similar a como lo hacía `AdminDashboard.tsx` (última jugada, estado, tiempo).
+
+3.  **Listeners de Socket Adicionales/Modificados en `GamePage.tsx` (para la vista de admin):**
+    * `player_joined`, `player_left`: Deben actualizar el estado `sessionPlayers`. Al unirse un jugador, también inicializar su entrada en `playerProgressView` a un estado 'waiting'.
+    * `admin_player_progress`, `player_completed_sequence`, `player_failed_sequence`: Deben actualizar el estado `playerProgressView` con la información recibida (jugada, estado, tiempo).
+    * `results_revealed`: Recibirá del servidor `{ solution, leaderboard, playerResults }`. Deberá:
+        * Actualizar `sessionPlayers` con el `leaderboard`.
+        * Guardar los datos en `resultsData`.
+        * Setear `showResultsView = true`.
+        * Setear `gameState.puzzleActive = false`.
+    * `puzzle_launched`: (El listener que ya tienes). Además de actualizar `currentPuzzle` y `gameState.puzzleActive`, también debería resetear `playerProgressView` para todos los jugadores a un estado 'waiting'.
+
+**Objetivo de este Paso:**
+Tener una vista de administrador funcional en `GamePage.tsx` donde un "socio" pueda:
+1. Definir el número de problemas y crear una sesión.
+2. Ver la información de la sesión.
+3. Usar `ChessPuzzleSetup` para configurar cada problema.
+4. Usar `GameControls` para manejar el flujo (lanzar, revelar, siguiente).
+5. Ver la lista de jugadores.
+
+Aún no estamos implementando la parte de "Resolver problemas" para el jugador normal, ni las "cosas nuevas" (Tácticas por TAG, Mis Tácticas). Vamos paso a paso.
+
+Por favor, modifica `GamePage.tsx` para incorporar estas funcionalidades de administrador.

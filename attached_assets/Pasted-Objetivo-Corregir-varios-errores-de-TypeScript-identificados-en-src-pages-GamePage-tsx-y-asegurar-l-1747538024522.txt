@@ -1,0 +1,68 @@
+Objetivo: Corregir varios errores de TypeScript identificados en src/pages/GamePage.tsx y asegurar la consistencia en el manejo de datos de jugadores.
+
+Contexto General del Proyecto:
+
+Frontend en React con TypeScript. El archivo en cuestión es GamePage.tsx.
+Se utilizan varios hooks personalizados (useLoadSiteTactics, useLoadUserSavedTactics, useSaveCurrentSetupAsUserTactic desde tacticsUtils.ts) y se interactúa con un contexto de autenticación (useAuth que provee user y profile) y un contexto de Socket.IO.
+El servidor envía información de jugadores con userId, nickname, y score. La interfaz Player en el cliente es { id: string; nickname: string; score: number; } donde id debe mapear a userId.
+Problemas/Errores de TypeScript Identificados en GamePage.tsx (y teorías para solucionarlos):
+
+Error de Destructuración en Hooks de Tácticas (ej: useLoadSiteTactics):
+
+Síntoma: Property 'applyTacticToSetup' does not exist on type '{ ... applySiteTacticToSetup: ... }'.ts(2339)
+Código Actual (Ejemplo): const { applyTacticToSetup: applySiteTacticToSetup } = useLoadSiteTactics(...);
+Problema: La destructuración intenta tomar una propiedad applyTacticToSetup del objeto devuelto por el hook, pero el hook en realidad devuelve una propiedad llamada applySiteTacticToSetup.
+Acción Solicitada:
+Corrige la destructuración para que coincida con el nombre de la propiedad devuelta por el hook. Por ejemplo: const { applySiteTacticToSetup } = useLoadSiteTactics(...); (y similar para useLoadUserSavedTactics si devuelve applyUserTacticToSetup).
+Asegúrate de que las llamadas a estas funciones en el JSX (ej: onClick) usen los nombres correctos de las variables destructuradas (ej: applySiteTacticToSetup(tactic)).
+Argumentos Incorrectos en useSaveCurrentSetupAsUserTactic:
+
+Síntoma: Expected 7 arguments, but got 4.ts(2554). Falta puzzleDescriptionInput, etc.
+Acción Solicitada: Modifica la llamada al hook useSaveCurrentSetupAsUserTactic para incluir todos los argumentos requeridos (puzzlesConfig, currentPuzzleIndexForSetup, puzzleNameInput, user?.id || '', puzzleDescriptionInput, puzzleDifficultyInput, puzzleTagsInput). Estas variables de estado ya existen en GamePage.tsx.
+Manejo del Evento leaderboard_updated:
+
+Síntomas:
+Parameter 'player' implicitly has an 'any' type.ts(7006).
+'id' is specified more than once, so this usage will be overwritten.ts(2783).
+(Implícito de error anterior) El evento del servidor es leaderboard_updated con payload { leaderboard: Player[] }, pero el código actual destructura { players }.
+Código Actual (problemático):
+TypeScript
+
+socket.on('leaderboard_updated', ({ players }) => {
+  // ...
+  players.forEach(player => {
+    newProgressView[player.id] = {
+      id: player.id,
+      nickname: player.nickname,
+      status: 'waiting',
+      ...playerProgressView[player.id]
+    };
+  });
+  // ...
+});
+Acción Solicitada:
+Modifica el callback para recibir (data: { leaderboard: Player[] }) y extrae el array como const playersArray = data.leaderboard;.
+Asegura que playersArray sea un array antes de iterar (ej: if (Array.isArray(playersArray)) { ... }).
+En el forEach, tipa explícitamente el parámetro: playersArray.forEach((player: Player) => { ... });.
+Corrige el orden de las propiedades en la asignación de newProgressView[player.id] para evitar la sobrescritura no deseada. El esparcimiento del objeto existente (...playerProgressView[player.id]) debe ir primero:
+TypeScript
+
+newProgressView[player.id] = {
+  ...(playerProgressView[player.id] || {}), // Progreso existente primero (o {} si es nuevo)
+  id: player.id,                            // Datos actuales del jugador
+  nickname: player.nickname,
+  status: 'waiting'                         // Nuevo estado o el que corresponda
+};
+Considera la lógica de la propiedad status: ¿siempre debe ser 'waiting' en cada actualización del leaderboard, o debe preservar el estado anterior si existe? Ajústalo según la lógica de juego deseada.
+Propiedad nickname en profile:
+
+Síntoma: Property 'nickname' does not exist on type 'Profile'.ts(2339) en la línea currentPlayerNickname={profile?.nickname || user?.email}.
+Acción Solicitada:
+Revisa la definición del tipo Profile (probablemente en AuthContext.tsx o tipos relacionados).
+Si Profile tiene un campo para el nombre de usuario/display con un nombre diferente (ej: username, display_name), úsalo.
+Si Profile no tiene esta información y no se puede añadir fácilmente, modifica la lógica para que use user?.email como fallback o un string vacío si profile no contiene un campo de nombre visible.
+Instrucciones Adicionales para la IA:
+
+Por favor, aplica estas correcciones directamente en el código de GamePage.tsx.
+Estos cambios son para corregir errores de tipo de TypeScript y mejorar la robustez. También deberían ayudar a resolver indirectamente el error de runtime Cannot read properties of undefined (reading 'forEach') al asegurar que los datos del evento leaderboard_updated se manejen correctamente.
+Presta atención a la consistencia y asegúrate de que todas las partes del componente utilicen los datos y tipos correctamente después de los cambios.

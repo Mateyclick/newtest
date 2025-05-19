@@ -1,0 +1,46 @@
+¡Impresionante el avance con la carga y guardado de tácticas usando hooks personalizados y el componente Accordion! `GamePage.tsx` y `tacticsUtils.ts` están muy bien encaminados.
+
+Ahora, necesitamos hacer algunos ajustes finos y mejoras para completar esta funcionalidad:
+
+**Tarea 1: Ajustes en `src/lib/utils/tacticsUtils.ts`**
+1.  **Eliminar Funciones Duplicadas:** Por favor, revisa el archivo y asegúrate de que las funciones `WorkspacePuzzlesByTags`, `saveUserPuzzle`, y `WorkspaceAvailableTags` estén definidas solo una vez.
+
+**Tarea 2: Ajustes en `src/pages/GamePage.tsx`**
+1.  **Uso Correcto de `apply...ToSetup` desde los Hooks:**
+    * En el JSX, dentro de la sección "Cargar Táctica del Sitio", el botón "Cargar" de cada táctica listada debe llamar directamente a `applySiteTacticToSetup(tactic)` (función que viene del hook `useLoadSiteTactics`).
+    * Similarmente, en la sección "Mis Tácticas Guardadas", el botón "Cargar" de cada táctica listada debe llamar directamente a `applyUserTacticToSetup(tactic)` (función que viene del hook `useLoadUserSavedTactics`).
+    * La función genérica `const applyTacticToSetup = (tactic: any) => { ... }` que estaba en `GamePage.tsx` puede ser eliminada.
+
+**Tarea 3: Mapeo Correcto de Campos y Valores por Defecto en los Hooks Personalizados (que residen en `@/hooks/tacticsUtils` o donde los hayas creado):**
+
+Por favor, revisa la lógica DENTRO de los hooks personalizados:
+* **`useLoadSiteTactics` y `useLoadUserSavedTactics` (específicamente en sus funciones internas `applySiteTacticToSetup` y `applyUserTacticToSetup`):**
+    * Cuando se carga una `TacticsPuzzle` de Supabase (que tiene un campo `solution`) para ser usada en `ChessPuzzleSetup` (que espera un `PuzzleState` con `mainLine`), asegúrate de que se haga el mapeo: `mainLine: tacticFromSupabase.solution`.
+    * Para los campos `timer` y `points`, si `tacticFromSupabase.timer` o `tacticFromSupabase.points` son `undefined` (porque son opcionales en la interfaz `TacticsPuzzle`), usa valores por defecto razonables (ej., `timer: tacticFromSupabase.timer || 60`, `points: tacticFromSupabase.points || 3`) al crear el objeto `PuzzleState` para `puzzlesConfig`.
+* **`useSaveCurrentSetupAsUserTactic` (específicamente en su función interna `handleSaveCurrentSetupAsUserTactic`):**
+    * Cuando se obtiene la configuración actual de `puzzlesConfig[currentPuzzleIndexForSetup]` (que es un `PuzzleState` con `mainLine`) para guardarla en Supabase (que espera una `TacticsPuzzle` con `solution`), asegúrate de que se haga el mapeo: `solution: currentSetupToSave.mainLine`.
+    * La `puzzleDataForSupabase` debe incluir también los campos `timer: currentSetupToSave.timer` y `points: currentSetupToSave.points`.
+
+**Tarea 4: Mejorar el Guardado de Tácticas Personales en `src/pages/GamePage.tsx` (UI y Datos):**
+
+1.  **Nuevos Estados en `GamePage.tsx` (para los inputs adicionales):**
+    * `puzzleDescriptionInput: string` (inicial `''`)
+    * `puzzleDifficultyInput: string` (inicial `'medio'`)
+    * `puzzleTagsInput: string` (para una entrada simple de tags separados por coma, inicial `''`)
+2.  **Nuevos Inputs en la UI (dentro de la sección "Mis Tácticas Guardadas" en el `AccordionItem value="user-tactics"`):**
+    * Añade un `<textarea>` para "Descripción" vinculado a `puzzleDescriptionInput`.
+    * Añade un `<input type="text">` (o un `<select>`) para "Dificultad" vinculado a `puzzleDifficultyInput`.
+    * Añade un `<input type="text">` para "TAGs (separados por coma)" vinculado a `puzzleTagsInput`.
+    * Estos inputs deben estar cerca del input `puzzleNameInput` y del botón "Guardar Configuración Actual".
+3.  **Modificar `handleSaveCurrentSetupAsUserTactic` en el Hook Personalizado:**
+    * El hook `useSaveCurrentSetupAsUserTactic` necesitará recibir estos nuevos valores (`description`, `difficulty`, `tagsString`) como argumentos.
+    * Dentro del hook, al preparar el objeto `puzzleDataForSupabase`:
+        * `description: descriptionFromInput`
+        * `difficulty: difficultyFromInput`
+        * `tags: tagsStringFromInput.split(',').map(tag => tag.trim()).filter(tag => tag)` (para convertir el string de tags en un array)
+    * Actualiza la llamada a `handleSaveCurrentSetupAsUserTactic` en `GamePage.tsx` para pasarle estos nuevos valores desde los estados de los inputs.
+
+**Objetivo de este Paso:**
+Asegurar que la carga de tácticas maneje correctamente los campos (`solution`/`mainLine`, `timer`, `points`). Permitir al socio guardar sus tácticas con más detalles (descripción, dificultad, tags personales).
+
+Después de esto, la funcionalidad de carga/guardado personal estará muy robusta. El siguiente gran paso de frontend será la función "Hacer Pública mi Táctica".

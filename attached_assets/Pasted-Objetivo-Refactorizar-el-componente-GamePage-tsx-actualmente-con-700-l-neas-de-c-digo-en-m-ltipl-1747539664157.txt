@@ -1,0 +1,58 @@
+Objetivo:
+Refactorizar el componente GamePage.tsx (actualmente con ~700 líneas de código) en múltiples componentes más pequeños y especializados, y potencialmente en hooks personalizados, para mejorar la legibilidad, mantenibilidad, y separación de concerns. El objetivo es que la funcionalidad completa se mantenga intacta.
+
+Contexto del GamePage.tsx Actual:
+El componente GamePage.tsx actualmente es muy grande y maneja múltiples responsabilidades, incluyendo:
+
+Cambiar entre tres vistas principales: initial_choice (elección inicial), player_view (vista del jugador que resuelve puzles) y admin_view (vista del administrador que crea y gestiona la sala).
+Gestionar una gran cantidad de estados de React (useState) para:
+La vista del jugador (sesiones disponibles, input para unirse, errores).
+La vista del administrador (configuración de puzles, lista de jugadores en sesión, progreso de jugadores, resultados).
+El estado general del juego (puzle actual, si un puzle está activo, sessionId, etc.).
+La carga y guardado de tácticas de ajedrez.
+Manejar un useEffect principal que configura numerosos listeners de eventos de Socket.IO (socket.on(...)) para toda la lógica del juego.
+Contener funciones handler que emiten eventos de Socket.IO (socket.emit(...)) para acciones como crear sesión, lanzar puzle, unirse a sesión, etc.
+Utilizar hooks personalizados para la gestión de tácticas (useLoadSiteTactics, etc.).
+Renderizar diferentes conjuntos de sub-componentes UI (ChessPuzzleSetup, PuzzleView, PlayerList, WaitingRoom, etc.) dependiendo de la vista y el estado del juego.
+Estrategia de Refactorización Sugerida (para tu consideración y mejora):
+
+Se sugiere dividir GamePage.tsx de la siguiente manera:
+
+Componente Contenedor Principal (GamePage.tsx simplificado):
+
+Podría seguir siendo el punto de entrada.
+Su principal responsabilidad sería manejar el estado de la vista actual (view: 'initial_choice', 'player_view', 'admin_view').
+Renderizaría uno de los nuevos componentes de vista basados en este estado.
+Podría seguir gestionando estados muy globales como sessionId si es compartido de forma fundamental antes de entrar a una vista específica, o delegarlo.
+Componentes de Vista Específicos:
+
+InitialChoiceView.tsx: Un componente simple que muestra los botones para "Resolver problemas" (que cambiaría la vista a player_view) y "Crear sala de problemas" (que cambiaría la vista a admin_view). Podría recibir las funciones para cambiar de vista como props.
+PlayerLobbyView.tsx (o parte de PlayerView.tsx): Responsable de la UI y lógica cuando un jugador elige "Resolver problemas" pero aún no se ha unido a una sesión (mostrar sesiones disponibles, input para unirse por ID).
+PlayerGameView.tsx (o parte de PlayerView.tsx): Responsable de la UI y lógica una vez que el jugador está DENTRO de una sesión activa (viendo WaitingRoom, PuzzleView, ResultsView desde la perspectiva del jugador). Manejaría los estados y listeners de socket relevantes solo para el jugador participando.
+AdminLobbyView.tsx (o parte de AdminView.tsx): Responsable de la UI para crear una nueva sesión (input de número de puzles, botón "Crear Sesión").
+AdminSessionView.tsx (o parte de AdminView.tsx): Responsable de la UI y lógica una vez que el admin ha creado una sesión (mostrando GameSessionInfo, ChessPuzzleSetup para cada puzle, PlayerList, PlayerProgressView, GameControls). Manejaría los estados y listeners de socket relevantes para la gestión de la sesión por el admin.
+Hooks Personalizados para Lógica Compartida o Compleja:
+
+useGameSessionEvents.ts (o un nombre similar): Considera crear un hook que encapsule la lógica central de manejo de estado del juego una vez que una sesión está activa (ej: currentPuzzle, gameState.puzzleActive, sessionPlayers, playerProgressView, resultsData) y los listeners de Socket.IO más comunes (leaderboard_updated, puzzle_launched, player_joined, player_left, etc.). Tanto PlayerGameView.tsx como AdminSessionView.tsx podrían utilizar este hook para obtener el estado del juego y quizás algunas funciones para emitir eventos. Esto ayudaría a evitar duplicar lógica de listeners y estados.
+Los hooks de tácticas (useLoadSiteTactics, etc.) ya existentes están bien como están y deberían seguir siendo utilizados por el componente que los necesite (probablemente AdminSessionView.tsx).
+Contextos y Componentes UI Existentes:
+
+Los contextos GameSocketContext y AuthContext deben seguir siendo la fuente para socket y user/profile.
+Los componentes UI ya creados (ChessPuzzleSetup, PuzzleView, PlayerList, etc.) deben ser reutilizados dentro de los nuevos componentes de vista más pequeños.
+Consideraciones Clave para la Refactorización:
+
+Mantenimiento de Funcionalidad: Toda la funcionalidad existente debe preservarse.
+Flujo de Datos: Asegurar un flujo de datos claro (props hacia abajo, callbacks/eventos hacia arriba o mediante contexto donde sea apropiado).
+Manejo de Sockets: La configuración y limpieza de los listeners de Socket.IO (socket.on, socket.off) deben manejarse correctamente dentro de los useEffect de los componentes o hooks que los necesiten, evitando fugas de memoria o listeners duplicados.
+Claridad y Cohesión: Cada nuevo componente/hook debe tener una responsabilidad clara y bien definida.
+Tu Tarea (IA del Frontend):
+
+Analiza la estructura actual de GamePage.tsx y la estrategia de refactorización sugerida.
+Propón una estructura de archivos/componentes detallada para esta refactorización. Puedes adoptar la estrategia sugerida, modificarla o proponer una alternativa si la consideras mejor.
+Implementa la refactorización. Esto implicará crear nuevos archivos de componentes (ej: AdminView.tsx, PlayerView.tsx, etc.) y posiblemente nuevos hooks (ej: useGameSessionEvents.ts).
+El GamePage.tsx original se convertirá en un componente mucho más simple, principalmente encargado de la lógica de cambio de vista principal.
+Asegúrate de que el estado se gestione de manera eficiente y se pase correctamente entre los componentes.
+Entregables Esperados:
+
+Una breve descripción de la nueva estructura de archivos que has creado.
+El código de los principales archivos refactorizados/creados (ej: el nuevo y simplificado GamePage.tsx, AdminView.tsx, PlayerView.tsx, y cualquier hook custom principal que hayas creado para la lógica del juego).

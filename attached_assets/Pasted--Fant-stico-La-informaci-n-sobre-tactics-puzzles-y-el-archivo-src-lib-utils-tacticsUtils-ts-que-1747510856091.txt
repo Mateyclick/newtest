@@ -1,0 +1,57 @@
+¡Fantástico! La información sobre `tactics_puzzles` y el archivo `src/lib/utils/tacticsUtils.ts` que has proporcionado/creado son exactamente lo que necesitábamos.
+
+Ahora, vamos a integrar estas utilidades en `src/pages/GamePage.tsx` para la vista de administrador (`admin_view`), específicamente para permitir a un "socio" cargar tácticas del sitio y guardar/cargar sus propias tácticas.
+
+**Tarea para `GamePage.tsx` - Funcionalidades de Carga/Guardado de Tácticas:**
+
+1.  **Importar Utilidades:**
+    * Importa las funciones necesarias de ` '@/lib/utils/tacticsUtils.ts'` (ej. `WorkspaceAvailableTags`, `WorkspacePuzzlesByTags`, `saveUserPuzzle`, y la interfaz `TacticsPuzzle`).
+    * (Nota: Necesitaremos crear una función `WorkspaceUserSavedPuzzles(userId: string)` en `tacticsUtils.ts` que consulte la tabla `user_saved_tactics` filtrando por `created_by`. Puedes asumir que esta función existirá y la usaremos. Devuelve `Promise<TacticsPuzzle[]>`).
+
+2.  **Nuevos Estados Necesarios en `GamePage.tsx`:**
+    * `siteTags: string[]` (para los TAGs de `tactics_puzzles`).
+    * `siteTacticsForSelectedTag: TacticsPuzzle[]`.
+    * `selectedSiteTag: string | null`.
+    * `userSavedTacticsList: TacticsPuzzle[]`.
+    * `isLoadingTactics: boolean` (para feedback visual).
+    * `puzzleNameInput: string` (para el nombre al guardar una táctica).
+
+3.  **Nuevas Funciones Handler en `GamePage.tsx`:**
+    * `loadSiteTags()`: Llama a `WorkspaceAvailableTags()` y actualiza `siteTags` y `isLoadingTactics`.
+    * `handleSiteTagChange(tag: string)`: Actualiza `selectedSiteTag`; llama a `WorkspacePuzzlesByTags([tag])` y actualiza `siteTacticsForSelectedTag` y `isLoadingTactics`.
+    * `loadUserSavedTactics()`: Llama a la (futura) `WorkspaceUserSavedPuzzles(user.id)` y actualiza `userSavedTacticsList` y `isLoadingTactics`.
+    * `applyTacticToSetup(tactic: TacticsPuzzle)`:
+        * Toma los datos de `tactic` (`fen`, `solution` como `mainLine`, `timer` si existe o default, `points` si existe o default, etc.).
+        * Actualiza el `puzzlesConfig[currentPuzzleIndexForSetup]` con estos datos (o un estado intermedio `currentPuzzleSetupData`).
+        * Llama a `handlePuzzleUpdate` para que `ChessPuzzleSetup` refleje estos cambios.
+    * `handleSaveCurrentSetupAsUserTactic()`:
+        * Obtiene la configuración actual de `puzzlesConfig[currentPuzzleIndexForSetup]`.
+        * Prepara un objeto `puzzleToSave: Omit<TacticsPuzzle, 'id' | 'created_at'>` (incluyendo `fen`, `solution` (de `mainLine`), `title` (de `puzzleNameInput`), `description` (quizás un nuevo input), `difficulty` (nuevo input), `tags` (nuevo input de tags para el usuario), y `created_by: user.id`).
+        * Llama a `saveUserPuzzle(puzzleToSave)`.
+        * Al confirmar, podría llamar a `loadUserSavedTactics()` para refrescar la lista.
+
+4.  **Modificaciones en la UI de `admin_view` (cuando `gameState.sessionId` existe):**
+    * **Debajo o cerca de `<ChessPuzzleSetup />` y `<GameControls />`, añade dos nuevas secciones colapsables o pestañas:**
+
+        * **Sección 1: "Cargar Táctica del Sitio"**
+            * Un botón "Mostrar Tácticas del Sitio" que al primer clic llame a `loadSiteTags()`.
+            * Un `<select>` dropdown para los `siteTags` (se llena después de `loadSiteTags`). Al cambiar el tag, llama a `handleSiteTagChange()`.
+            * Si `isLoadingTactics`, mostrar un spinner.
+            * Una lista de las `siteTacticsForSelectedTag` (mostrar `tactic.title`, `tactic.difficulty`). Cada item con un botón "Cargar esta táctica" que llame a `applyTacticToSetup(tactic)`.
+
+        * **Sección 2: "Mis Tácticas Guardadas"**
+            * Un botón "Mostrar Mis Tácticas" que al primer clic llame a `loadUserSavedTactics()`.
+            * Si `isLoadingTactics`, mostrar un spinner.
+            * Una lista de `userSavedTacticsList` (mostrar `tactic.title`). Cada item con un botón "Cargar esta táctica" que llame a `applyTacticToSetup(tactic)`.
+            * Un input para `puzzleNameInput` (para el título de la táctica a guardar).
+            * (Opcional por ahora, pero bueno tenerlo en mente: inputs para descripción, dificultad, tags al guardar).
+            * Un botón "Guardar Configuración Actual" que llame a `handleSaveCurrentSetupAsUserTactic()`.
+
+**Objetivo de este Paso:**
+Que el socio/admin pueda:
+1.  Ver y seleccionar TAGs de las tácticas del sitio.
+2.  Ver y cargar tácticas del sitio (filtradas por el TAG seleccionado) en el `ChessPuzzleSetup`.
+3.  Ver y cargar sus propias tácticas guardadas en el `ChessPuzzleSetup`.
+4.  Guardar la configuración actual del `ChessPuzzleSetup` como una de sus tácticas (con al menos un nombre).
+
+Aún no implementaremos la funcionalidad "Hacer Pública mi Táctica". Enfócate en la carga y el guardado personal.

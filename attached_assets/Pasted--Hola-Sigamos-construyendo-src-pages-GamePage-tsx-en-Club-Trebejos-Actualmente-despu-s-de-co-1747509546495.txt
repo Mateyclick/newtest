@@ -1,0 +1,21 @@
+¡Hola! Sigamos construyendo `src/pages/GamePage.tsx` en "Club Trebejos".
+
+Actualmente, después de conectar al socket, la página se queda en blanco o muestra un `PuzzleView` por defecto. Necesitamos implementar la pantalla inicial de selección.
+
+**Tarea para `GamePage.tsx`:**
+
+1.  **Acceder al Contexto de Autenticación:**
+    * Importa y utiliza el `AuthContext` de "Club Trebejos" para obtener la información del usuario logueado, específicamente su rol (asumamos que el perfil del usuario en `AuthContext` tiene una propiedad `role` que puede ser, por ejemplo, `'socio'` o `'authenticated'`). Guarda este rol en un estado local (ej. `userRole`).
+
+2.  **Estado de Vista Principal:**
+    * Introduce un estado local para controlar la vista actual, por ejemplo: `const [view, setView] = useState<'initial_choice' | 'player_view' | 'admin_view'>('initial_choice');`
+
+3.  **Renderizado Condicional Inicial:**
+    * Cuando `view === 'initial_choice'`:
+        * Muestra un título como "Bienvenido al Juego de Tácticas".
+        * Muestra un botón grande (usando `<Button>` de shadcn/ui) con el texto "Resolver problemas". Al hacer clic, por ahora solo cambia el estado `setView('player_view')` (ya implementaremos la lógica de unirse/ver sesiones de jugadores más adelante).
+        * **Condicionalmente**, si `userRole === 'socio'`, muestra un segundo botón grande con el texto "Crear sala de problemas como anfitrión". Al hacer clic, por ahora solo cambia el estado `setView('admin_view')` (ya implementaremos la vista de admin más adelante).
+    * Si `view === 'player_view'`, por ahora solo muestra un `<h1>Player View (Próximamente)</h1>`.
+    * Si `view === 'admin_view'`, por ahora solo muestra un `<h1>Admin View (Próximamente)</h1>`.
+
+**Objetivo de este paso:** Que `GamePage.tsx` muestre correctamente las opciones iniciales basándose en el rol del usuario. No necesitamos que los botones hagan nada más que cambiar este estado `view` por ahora. Asegúrate de que los imports de `AuthContext` y `<Button>` sean correctos.

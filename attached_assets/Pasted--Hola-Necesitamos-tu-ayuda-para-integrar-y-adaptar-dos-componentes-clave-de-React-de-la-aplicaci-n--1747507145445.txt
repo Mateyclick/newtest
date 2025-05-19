@@ -1,0 +1,68 @@
+¡Hola! Necesitamos tu ayuda para integrar y adaptar dos componentes clave de React de la aplicación "Trebejos Game" (ChessPuzzleSetup.tsx y PuzzleView.tsx) directamente dentro de nuestro proyecto "Club Trebejos" (que ya tienes cargado). El objetivo es que estos componentes utilicen el sistema de autenticación y gestión de sockets existente en "Club Trebejos".
+
+Contexto General y Objetivo Principal:
+
+Queremos traer la funcionalidad del tablero y la visualización de puzzles de "Trebejos Game" a "Club Trebejos". "Club Trebejos" ya cuenta con:
+
+Autenticación de usuarios mediante Supabase (con JWT).
+Un GameSocketContext.tsx (src/contexts/GameSocketContext.tsx) que gestiona la conexión Socket.IO al servidor de "Trebejos Game". Este contexto provee una instancia de socket (ya conectado y autenticado usando el JWT de Supabase) y un booleano isConnected.
+Una página GamePage.tsx (src/pages/GamePage.tsx) destinada a albergar la interfaz del juego.
+1. Información del Servidor "Trebejos Game" Modificado (para tu conocimiento contextual):
+
+El servidor server/index.js de "Trebejos Game" (que corre externamente, por ejemplo, en Render) ha sido modificado. Autentica conexiones de socket con un token JWT.
+Un socket autenticado en el servidor tiene un objeto socket.user con:
+socket.user.id: El ID de usuario de Supabase.
+socket.user.email: El email del usuario.
+socket.user.role: El rol del usuario (importante: 'socio' para funcionalidades de admin).
+2. Lógica de Roles y Funcionalidad Futura (a implementar en "Club Trebejos" usando estos componentes):
+
+Socios (socket.user.role === 'socio' en el servidor, o el perfil del usuario en AuthContext en el cliente):
+Podrán usar ChessPuzzleSetup.tsx para crear/configurar problemas y lanzarlos en sesiones en vivo.
+A futuro: Guardar problemas en Supabase.
+Usuarios Registrados:
+Podrán jugar usando PuzzleView.tsx.
+TAREA ESPECÍFICA: Integrar y Adaptar ChessPuzzleSetup.tsx y PuzzleView.tsx EN "Club Trebejos"
+
+Te proporcionaremos el código fuente original de ChessPuzzleSetup.tsx y PuzzleView.tsx (provenientes de "Trebejos Game"). Tu tarea es:
+
+Crear los archivos correspondientes dentro de la estructura de "Club Trebejos": Sugiere una ubicación adecuada (ej. src/components/game/ChessPuzzleSetup.tsx y src/components/game/PuzzleView.tsx) o créalos donde consideres mejor.
+
+Adaptar el código de estos componentes para que:
+
+A. Para Ambos Componentes:
+
+Manejo del Socket:
+Deben consumir la instancia de socket y el estado isConnected del GameSocketContext.tsx ya existente en "Club Trebejos" (src/contexts/GameSocketContext.tsx).
+Identidad del Usuario:
+La identidad del usuario (id, email) se obtendrá del AuthContext de "Club Trebejos" o estará implícita en la conexión del socket provisto por GameSocketContext.tsx (ya que el servidor la conoce). No deben gestionar nicknames de forma independiente para la lógica de juego.
+Comunicación con el Servidor:
+Todos los socket.emit(...) y socket.on(...) deben operar sobre la instancia de socket del GameSocketContext.tsx.
+B. Específicamente para el nuevo ChessPuzzleSetup.tsx en "Club Trebejos":
+
+Interacción: Permitirá a un "socio" configurar y lanzar problemas. La GamePage.tsx de "Club Trebejos" será responsable de renderizar este componente condicionalmente para los socios.
+Eventos Emitidos (ejemplos): create_session, launch_puzzle. El servidor validará permisos.
+Props y Estado: Deberá recibir las props necesarias desde GamePage.tsx (ej. sessionId si la sesión está activa).
+C. Específicamente para el nuevo PuzzleView.tsx en "Club Trebejos":
+
+Interacción: Usado por jugadores en una sesión activa.
+Eventos Recibidos (ejemplos): problem_launched.
+Eventos Emitidos (ejemplos): submit_answer.
+Props: Necesitará props de GamePage.tsx (ej. datos del problema, sessionId).
+Consideraciones Adicionales para la Adaptación:
+
+Reutilización de Componentes Hijos: Si ChessPuzzleSetup.tsx o PuzzleView.tsx utilizan otros sub-componentes de "Trebejos Game" (como GameControls.tsx etc., que también te hemos pasado), considera si estos también necesitan ser copiados/adaptados en "Club Trebejos" y cómo se vincularían.
+Estilos: Asegúrate de que los estilos se integren o sean compatibles con Tailwind CSS y shadcn/ui, que son los utilizados en "Club Trebejos". Si los componentes originales usan CSS modules u otro sistema, indica cómo se manejaría.
+Importaciones: Actualiza todas las rutas de importación para que coincidan con la nueva ubicación de los archivos y los contextos/hooks de "Club Trebejos" (ej. useContext(GameSocketContext)).
+Entregables Esperados (Modificaciones EN el proyecto "Club Trebejos"):
+
+Los nuevos archivos .tsx (ChessPuzzleSetup.tsx, PuzzleView.tsx, y cualquier sub-componente necesario) creados y modificados en la ubicación apropiada dentro del proyecto "Club Trebejos".
+Una breve explicación de dónde se ubicaron los archivos y los cambios principales realizados.
+Indicaciones sobre cómo GamePage.tsx podría empezar a utilizar estos componentes (qué props pasar, cómo manejar el estado inicial).
+Archivos de "Trebejos Game" para Adaptar (te los pasaremos textualmente):
+
+ChessPuzzleSetup.tsx (original)
+PuzzleView.tsx (original)
+(y el contenido de los otros archivos que te pasamos como AdminDashboard.tsx, PlayerRoom.tsx, GameControls.tsx, etc., para que tengas el contexto completo de cómo funcionaban originalmente y puedas extraer la lógica o componentes necesarios).
+El objetivo es que, después de tu trabajo, estos componentes estén listos para ser renderizados y utilizados dentro de GamePage.tsx en "Club Trebejos", conectándose correctamente al servidor de "Trebejos Game" a través del GameSocketContext.tsx.
+
+¡Muchas gracias!

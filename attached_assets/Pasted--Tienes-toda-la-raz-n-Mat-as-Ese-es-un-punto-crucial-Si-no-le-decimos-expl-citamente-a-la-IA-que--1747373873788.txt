@@ -1,0 +1,78 @@
+¡Tienes toda la razón, Matías! Ese es un punto crucial. Si no le decimos explícitamente a la IA que estamos cambiando el método de autenticación, podría intentar añadir el sistema de email/contraseña encima del de Google, y eso no es lo que queremos.
+
+Necesitamos que entienda que la idea original de usar Google Sign-In se descarta por ahora, y que debe modificar el trabajo que ya hizo para implementar el sistema de email y contraseña con Supabase.
+
+Aquí tienes el prompt ajustado con esas aclaraciones. ¡Bien visto!
+
+Prompt para la IA Externa (Refactorización a Email/Contraseña con Supabase):
+
+"Hola IA,
+
+Necesitamos hacer un cambio en el sistema de autenticación que implementaste anteriormente para nuestro proyecto del Club Trebejos con Supabase. Hemos decidido cambiar el método de inicio de sesión: en lugar de usar 'Iniciar Sesión con Google', implementaremos un sistema de registro e inicio de sesión tradicional con Email y Contraseña, utilizando Supabase Authentication.
+
+Por favor, modifica el código existente (especialmente AuthContext.tsx o como hayas llamado al proveedor de autenticación, y Navbar.tsx) y añade los nuevos componentes necesarios para este cambio.
+
+Objetivo Principal:
+
+Reemplazar la funcionalidad de 'Iniciar Sesión con Google' por un sistema de registro e inicio de sesión con Email y Contraseña.
+Permitir a los nuevos usuarios registrarse y a los existentes iniciar sesión.
+Manejar el cierre de sesión.
+Mantener la estructura para perfiles de usuario en Supabase (tabla profiles).
+Reflejar el nuevo estado de autenticación en el Navbar.
+Instrucciones Detalladas para la Modificación y Nuevas Adiciones (Código Frontend en React):
+
+Modificación del Contexto de Autenticación (ej. AuthContext.tsx):
+
+Elimina la función signInWithGoogle que habías implementado.
+Añade Nuevas Funciones de Autenticación:
+signUpWithEmailPassword(email, password): Debe usar supabase.auth.signUp({ email, password }). Considera las opciones para emailRedirectTo si quieres manejar la confirmación de email (ej. options: { emailRedirectTo:${window.location.origin}/perfil}).
+signInWithEmailPassword(email, password): Debe usar supabase.auth.signInWithPassword({ email, password }).
+La función signOutUser() (usando supabase.auth.signOut()) probablemente pueda permanecer sin cambios.
+La lógica de onAuthStateChange para establecer user y session, y la función WorkspaceProfile para leer/crear el documento en la tabla profiles de Supabase, siguen siendo relevantes y deberían funcionar de manera similar con este nuevo método de autenticación.
+Nuevas Páginas/Rutas para Formularios de Autenticación:
+
+Página de Registro (src/pages/SignUp.tsx - NUEVO ARCHIVO):
+Ruta: /registrarse (añadir a App.tsx).
+Debe contener un formulario con campos para Email, Contraseña y Confirmar Contraseña. Utiliza componentes de shadcn/ui (Input, Label, Button).
+Al enviar el formulario, debe llamar a la función signUpWithEmailPassword del contexto de autenticación.
+Maneja los errores y muestra feedback al usuario (ej. "Registro exitoso, revisa tu email para confirmar" o mensajes de error específicos de Supabase).
+Página de Inicio de Sesión (src/pages/SignIn.tsx - NUEVO ARCHIVO):
+Ruta: /iniciar-sesion (añadir a App.tsx).
+Debe contener un formulario con campos para Email y Contraseña (usa componentes shadcn/ui).
+Al enviar, debe llamar a la función signInWithEmailPassword del contexto.
+Maneja errores y muestra feedback. Si el inicio de sesión es exitoso, redirige al usuario (ej. a /perfil o a la página de inicio).
+Modificación del Navbar.tsx:
+
+Consume el contexto/hook de autenticación.
+Si el usuario no está logueado:
+Elimina el botón "Iniciar Sesión con Google".
+Añade botones/enlaces "Iniciar Sesión" (que dirija a /iniciar-sesion) y "Registrarse" (que dirija a /registrarse).
+Si el usuario está logueado: La lógica para mostrar su user.email (o profile.display_name) y un botón "Cerrar Sesión" puede permanecer similar.
+Manejo de Perfiles de Usuario (Lógica Frontend en AuthContext.tsx y tipo en src/lib/types/profile.ts):
+
+La interfaz Profile que definimos (o que definiste) sigue siendo válida:
+TypeScript
+
+export interface Profile {
+  id: string; // Coincide con user.id de Supabase Auth
+  email?: string;
+  display_name?: string;
+  avatar_url?: string; // Para email/pass, el avatar no vendrá del proveedor, podría ser un placeholder o subido por el usuario más adelante.
+  roles?: { socio: boolean }; // Por defecto { socio: false }
+  updated_at?: string;
+}
+Sincronización con Tabla profiles: La lógica en WorkspaceProfile para crear un nuevo registro en la tabla profiles cuando un usuario se registra (y confirma su email, si está habilitado en Supabase) sigue siendo necesaria. Al crear el perfil, el display_name podría ser inicialmente la parte del email antes del '@', y avatar_url podría ser null o un placeholder.
+Recordatorio para la IA: La tabla profiles será creada por Matías en Supabase.
+Página de Perfil de Ejemplo (src/pages/Profile.tsx):
+
+Su funcionalidad principal (proteger la ruta y mostrar datos del usuario/perfil) no debería necesitar grandes cambios, ya que depende del estado de autenticación general.
+Modificación de App.tsx:
+
+Asegúrate de que las nuevas rutas (/registrarse, /iniciar-sesion) estén definidas.
+El AuthProvider debe seguir envolviendo las rutas de la aplicación.
+Requisitos Esenciales (Reiteración):
+
+Responsividad total.
+Coherencia de estilo con shadcn/ui y el proyecto existente.
+Código limpio en React y TypeScript.
+No afectar negativamente otras funcionalidades existentes.

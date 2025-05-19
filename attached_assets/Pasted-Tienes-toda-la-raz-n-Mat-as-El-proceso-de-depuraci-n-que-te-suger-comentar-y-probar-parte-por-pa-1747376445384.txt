@@ -1,0 +1,41 @@
+Tienes toda la razón, Matías. El proceso de depuración que te sugerí (comentar y probar parte por parte) es mucho más ágil cuando tienes control directo sobre el código y el entorno de desarrollo local. Intentar hacer eso a través de "prompts" a otra IA sería muy lento e ineficiente.
+
+Dado que la IA externa es la que está generando y modificando el código, lo mejor es pedirle que analice su propio trabajo en busca del error que nos está causando la caída del servidor de Vite y los Failed to fetch.
+
+El último error claro de React que vimos fue:
+
+Warning: Invalid hook call. Hooks can only be called inside of the body of a function component.
+Cannot read properties of null (reading 'useEffect')
+Y se mencionaba que ocurría "en el componente <QueryClientProvider>" dentro de App.
+Aunque ya no veas ese error explícito en la consola del navegador (porque ahora solo ves los Failed to fetch debido a la desconexión del servidor), es muy probable que ese error de "Invalid hook call" siga siendo la causa subyacente que hace que el servidor de Vite falle o se vuelva inestable.
+
+Vamos a darle un prompt a la IA para que se enfoque en esto:
+
+Prompt para la IA Externa (Diagnóstico y Corrección de "Invalid hook call" y Caída del Servidor):
+
+"Hola IA,
+
+A pesar de las correcciones anteriores en las importaciones, seguimos experimentando un problema donde la aplicación no carga y la consola del navegador muestra repetidamente Failed to fetch y mensajes de [vite] server connection lost. Polling for restart....
+
+El último error específico de React que identificamos antes de que estos problemas de conexión se volvieran dominantes era:
+
+Warning: Invalid hook call. Hooks can only be called inside of the body of a function component.
+Cannot read properties of null (reading 'useEffect') Este error se reportó como ocurriendo "en el componente <QueryClientProvider>", que está en nuestro archivo App.tsx.
+Sospechamos que una violación de las Reglas de los Hooks de React o un error de inicialización en alguno de los componentes o providers que has implementado para el sistema de autenticación con Supabase está causando este problema y, como consecuencia, la inestabilidad del servidor de Vite.
+
+Por favor, realiza un análisis detallado del siguiente código que has generado/modificado:
+
+El archivo App.tsx (la estructura de los providers y cómo se renderizan las rutas).
+El archivo del contexto de autenticación (AuthContext.tsx o como lo hayas llamado), prestando especial atención a cómo se usan los hooks (useState, useEffect, useContext) y a la lógica de WorkspaceProfile.
+El componente Navbar.tsx, específicamente cómo consume useAuth().
+Cualquier otra página o componente nuevo que hayas creado para el flujo de registro/inicio de sesión (SignUp.tsx, SignIn.tsx, Profile.tsx).
+Busca específicamente:
+
+Cualquier llamada a hooks de React (ej. useState, useEffect, useContext, useQuery, useAuth) que no esté en el nivel superior de un componente funcional o un custom hook.
+Hooks llamados dentro de condiciones, bucles o funciones anidadas que no sean componentes.
+Posibles problemas en la inicialización de los contextos o en el manejo del estado de carga que puedan llevar a un estado inconsistente de React.
+Alguna configuración o importación que, en tu experiencia, podría llevar a un conflicto de versiones de React o a cargar múltiples instancias de React (aunque esto es menos probable que lo soluciones directamente, cualquier observación sería útil).
+Solicitud:
+Proporciona las versiones corregidas de los archivos donde encuentres el problema, con una explicación de la corrección, para resolver el error de "Invalid hook call" y estabilizar la aplicación. El objetivo es que la aplicación pueda arrancar y renderizar sin que el servidor de Vite se caiga.
+
+¡Gracias por tu ayuda para depurar esto!"

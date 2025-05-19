@@ -1,0 +1,49 @@
+Hola IA, ¡excelente trabajo con la estructura inicial de AdminPage.tsx! Ahora necesitamos refinar y asegurar que las funcionalidades de 'Gestión de Socios' y 'Carga de Problemas de Táctica' estén completas y robustas.
+
+Contexto:
+
+Ya tenemos la página /admin protegida por ProtectedRoute adminOnly={true}.
+AdminPage.tsx utiliza Tabs de shadcn/ui para separar las dos funcionalidades.
+El usuario Súper Administrador (con profile.roles.site_admin === true) accederá a esta página.
+Las tablas profiles y tactics_puzzles en Supabase ya están creadas con las columnas y RLS que hemos discutido.
+Por favor, revisa y completa la implementación en src/pages/AdminPage.tsx para lo siguiente:
+
+1. Pestaña "Gestión de Socios":
+* Búsqueda de Usuario: El input para buscar por email y el botón "Buscar" ya están. La función searchUser parece correcta al hacer select en profiles por email.
+* Actualización de Estado de Socio y Fecha socio_hasta:
+* El Switch para foundUser.roles.socio y el Calendar en Popover para socio_hasta están bien planteados.
+* Asegurar en updateMemberStatus:
+* Que al actualizar, se preserve cualquier otro rol existente en foundUser.roles (ej. site_admin) y solo se modifique la propiedad socio. El código actual roles: { ...foundUser.roles, socio: isMember } parece hacer esto bien.
+* Que la fecha socio_hasta se guarde correctamente en formato YYYY-MM-DD o como null si se desmarca la fecha (si el Calendar permite deseleccionar). Si date es undefined (porque no se seleccionó o se borró), socio_hasta debería guardarse como null en la base de datos. El código actual date?.toISOString().split('T')[0] guardará la fecha o undefined (que Supabase podría interpretar como no cambiar o null si la columna lo permite). Asegúrate de que esto sea robusto.
+* Feedback al Admin: Las notificaciones toast están bien.
+* Refrescar Datos: Que searchUser() se llame después de actualizar para mostrar el estado más reciente está perfecto.
+
+2. Pestaña "Problemas de Táctica" (Cargar Nuevos Problemas a tactics_puzzles):
+* Formulario: Los campos que definiste (FEN, Solución SAN, Turno, Categoría/Tema, Dificultad, Descripción, y los extras opcionales) son correctos.
+* Función saveTacticsPuzzle:
+* Coincidencia con la Tabla tactics_puzzles: Es crucial que los nombres de las propiedades en el objeto que se pasa a .insert() coincidan EXACTAMENTE con los nombres de las columnas en tu tabla tactics_puzzles en Supabase.
+* fen: fen (TEXT NOT NULL)
+* solution_moves_san: solution (TEXT NOT NULL) - Asegúrate de que en tu objeto de inserción la clave sea solution_moves_san y el valor sea el estado solution.
+* turn: turn (CHAR(1) NOT NULL - 'w' o 'b')
+* category vs themes: En el código, estás usando themes: [theme]. Esto implica que tu tabla tactics_puzzles tiene una columna llamada themes de tipo TEXT[] (array de texto). Si tu columna se llama category y es de tipo TEXT (como en una de nuestras últimas definiciones de tabla), entonces aquí deberías pasar category: theme. Por favor, usa la estructura correcta según la tabla tactics_puzzles que Matías ha creado (él usó category TEXT NOT NULL y difficulty_level TEXT en la última versión del CREATE TABLE que le di). Asumamos para este prompt que la tabla tiene category TEXT y difficulty_level TEXT.
+* difficulty_level: difficulty (TEXT)
+* description: description (TEXT)
+* source_game_pgn: sourcePgn (TEXT)
+* event_name: event (TEXT)
+* white_player: whitePlayer (TEXT)
+* black_player: blackPlayer (TEXT)
+* white_elo: parseInt(whiteElo) || null (INTEGER)
+* black_elo: parseInt(blackElo) || null (INTEGER)
+* created_by_user_id: profile?.id (UUID, FK a profiles.id). Esto es correcto.
+* is_active: true (BOOLEAN, default true). Correcto.
+* Validaciones (Opcional, pero bueno para UX): Considera añadir validaciones básicas en el frontend antes de enviar (ej. que el FEN sea válido, que la solución no esté vacía). Por ahora, las validaciones required en los inputs son un buen comienzo.
+* Feedback y Reseteo del Formulario: Las notificaciones toast y el reseteo del formulario están perfectos.
+
+Requisitos Generales Adicionales:
+
+Protección de la Página: Asegúrate de que esta página /admin siga siendo accesible solo para usuarios con profile.roles.site_admin === true (esto ya lo maneja ProtectedRoute).
+Estilo y Responsividad: Mantener la coherencia con el resto del sitio. El diseño actual con Tabs es un buen punto de partida.
+Manejo de Errores Detallado: Si Supabase devuelve un error específico (ej. por RLS, datos incorrectos, etc.), intenta que el toast.error sea lo más informativo posible para el administrador.
+Por favor, proporciona el código actualizado para src/pages/AdminPage.tsx asegurándote de que la lógica de inserción en saveTacticsPuzzle coincida con la estructura de la tabla tactics_puzzles que tiene estas columnas principales: fen, solution_moves_san, turn, category (TEXT), difficulty_level (TEXT), created_by_user_id, y los campos opcionales.
+
+¡Confiamos en tu habilidad para hacer este panel de súper usuario funcional y fácil de usar para Matías! ¡Gracias!"

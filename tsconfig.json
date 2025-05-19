@@ -1,0 +1,38 @@
+{
+  "files": [], 
+   "references": [
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.node.json" }
+  ],
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+    // "allowImportingTsExtensions": true, // 'noEmit' debe ser 'false' si esto es true. Dado que tienes noEmit:true, comentaremos esto.
+                                          // Vite lo maneja bien sin esta opción explícita para el chequeo de tipos.
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "jsx": "preserve", // Correcto para Vite con React/Vue etc. que procesan JSX
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "allowJs": true,
+    "types": ["vite/client"], // Correcto para tener tipos de Vite en el cliente
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],
+    "module": "NodeNext", // CAMBIO: De ESNext a NodeNext para coincidir con moduleResolution
+    "target": "ESNext", // ESNext como target está bien para transpilación moderna
+    "resolveJsonModule": true,
+    "isolatedModules": true, // Bueno para asegurar que cada archivo sea un módulo
+    "noEmit": true // Esto está bien para Vite, ya que Vite se encarga del bundling/emisión.
+                  // Sin embargo, si tsconfig.app.json tiene "composite: true", a veces hay conflictos.
+                  // Por ahora lo dejamos, y vemos si los cambios en tsconfig.app.json son suficientes.
+  },
+  "include": [
+    "src/**/*.ts", // Más específico para archivos TypeScript
+    "src/**/*.d.ts", // Archivos de declaración
+    "src/**/*.tsx", // Archivos TSX
+    "src/**/*.vue" // Si usaras Vue, o elimina si no
+  ],
+  "exclude": ["node_modules", "dist"]
+}

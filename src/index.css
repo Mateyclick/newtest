@@ -1,0 +1,232 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Lora:wght@400;500;600&family=Rubik:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222 14% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 14% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 14% 12%;
+    --primary: 250 97% 37%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222 14% 12%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 195 73% 73%;
+    --accent-foreground: 222 14% 12%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214 32% 92%;
+    --input: 214 32% 92%;
+    --ring: 250 97% 37%;
+    --radius: 0.5rem;
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5% 26%;
+    --sidebar-primary: 240 6% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 5% 96%;
+    --sidebar-accent-foreground: 240 6% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217 91% 60%;
+    
+    /* Custom color variables */
+    --france-blue: 250 97% 37%;
+    --pure-white: 0 0% 100%;
+    --celeste: 195 73% 73%;
+    
+    /* Spacing variables for sections */
+    --section-spacing: 7rem;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    font-family: 'Inter', 'Lora', system-ui, sans-serif;
+    scroll-behavior: smooth;
+    cursor: url('/images/cursor/pawn-white.svg'), auto;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-playfair font-bold tracking-tight;
+  }
+
+  p, li, span:not(.font-rubik):not(.font-playfair) {
+    @apply font-lora;
+  }
+  
+  .glass-effect {
+    @apply bg-white/90 backdrop-blur-md border border-white/30 shadow-lg;
+  }
+  
+  .section-container {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24;
+  }
+  
+  .fade-mask-b {
+    mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
+  }
+  
+  .fade-mask-t {
+    mask-image: linear-gradient(to top, black 85%, transparent 100%);
+  }
+  
+  /* Animation classes */
+  .page-transition {
+    animation: fadeIn 0.3s ease-out;
+  }
+  
+  /* Custom button styles */
+  .btn-primary {
+    @apply bg-france text-white py-2 px-4 rounded-md transition-all duration-300 
+           shadow-btn hover:shadow-lg hover:scale-[1.02] hover:bg-france/90 
+           focus:outline-none focus:ring-2 focus:ring-france/50 active:scale-[0.98]
+           font-rubik;
+  }
+  
+  /* Custom link styles with underline animation */
+  .animated-link {
+    @apply relative text-france font-medium transition-colors duration-200;
+  }
+  
+  .animated-link::after {
+    content: '';
+    @apply absolute left-0 bottom-0 w-full h-[2px] bg-celeste scale-x-0 transition-transform duration-300 origin-left;
+  }
+  
+  .animated-link:hover::after {
+    @apply scale-x-100;
+  }
+  
+  /* Card styles with subtle shadow */
+  .card-enhanced {
+    @apply bg-white rounded-xl shadow-card transition-all duration-300 hover:shadow-lg;
+  }
+
+  /* Background with dark gradients for contrast */
+  .bg-dark-gradient {
+    cursor: url('/images/cursor/pawn-black.svg'), auto;
+  }
+  
+  /* Chess-themed headers */
+  .chess-header {
+    @apply font-playfair text-4xl md:text-5xl font-bold text-france mb-6;
+  }
+  
+  .chess-subheader {
+    @apply font-rubik text-xl md:text-2xl font-medium text-gray-700 mb-4;
+  }
+}
+
+/* Reveal animations */
+.reveal {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
+.reveal.active {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.reveal-children > *:nth-child(1) { transition-delay: 0.1s; }
+.reveal-children > *:nth-child(2) { transition-delay: 0.2s; }
+.reveal-children > *:nth-child(3) { transition-delay: 0.3s; }
+.reveal-children > *:nth-child(4) { transition-delay: 0.4s; }
+.reveal-children > *:nth-child(5) { transition-delay: 0.5s; }
+
+/* Calendar styles */
+.calendar-day {
+  @apply relative flex items-center justify-center rounded-md aspect-square w-10 h-10 text-sm transition-all duration-200;
+}
+
+.calendar-day:hover {
+  @apply bg-celeste/30 text-france;
+}
+
+.calendar-day.active {
+  @apply bg-france text-white font-medium;
+}
+
+/* Page transitions */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Media queries */
+@media (max-width: 768px) {
+  .section-container {
+    @apply py-12;
+  }
+  
+  .chess-header {
+    @apply text-3xl;
+  }
+  
+  .chess-subheader {
+    @apply text-xl;
+  }
+  
+  .timeline-item {
+    @apply flex flex-col gap-4;
+  }
+  
+  .timeline-content {
+    @apply w-full order-2;
+  }
+  
+  .timeline-image {
+    @apply w-full order-1;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  [id] {
+    scroll-margin-top: 2rem;
+  }
+}
+/* Antes: bg-gray-50 */
+#results {
+  background-color: hsl(var(--celeste)/0.08); /* Celeste muy suave */
+}
+/* En rondas y tabla (2 cambios) */
+.bg-gray-50 {
+  @apply bg-[hsl(var(--celeste)/0.15)]; /* Celeste translúcido */
+}
+/* En el hover del torneo */
+.hover\:bg-gray-50\/50 {
+  @apply hover:bg-[hsl(var(--celeste)/0.2)]; /* Celeste más intenso al hover */
+}

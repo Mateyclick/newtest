@@ -1,0 +1,16 @@
+¡Hola! Estoy probando `GamePage.tsx`. Cuando entro a la ruta `/juego` como un usuario que SÉ que es "socio" en la base de datos (su perfil en la tabla `profiles` tiene el rol/campo correspondiente para indicar que es socio), en la pantalla inicial solo veo el botón "Resolver problemas". El botón "Crear sala de problemas como anfitrión" no aparece.
+
+Esto sugiere que la condición `user?.role === 'socio'` (o `profile?.role === 'socio'`) en `GamePage.tsx` no se está evaluando como verdadera.
+
+**Por favor, ayúdame a revisar en `src/pages/GamePage.tsx` y en cómo se obtiene el rol desde `src/contexts/AuthContext.tsx`:**
+
+1.  **Fuente del Rol:**
+    * En `GamePage.tsx`, para determinar si el usuario es socio, ¿deberíamos usar `user.role`, `profile.role`, o quizás `profile.socio` (si "socio" es un campo booleano en la tabla `profiles`)?
+    * El JSON de mi perfil en la tabla `profiles` para un socio es `{ "socio": true, "site_admin": true }`. Por favor, asegúrate de que la condición en `GamePage.tsx` para mostrar el botón de anfitrión y para la variable `isSocio` use la propiedad correcta del objeto `profile` (que viene de `useAuth()`) para verificar este estado de "socio". Por ejemplo, si es un campo booleano `socio`, debería ser `profile?.socio`.
+
+2.  **Consistencia:** Asegúrate de que la condición para mostrar el botón "Crear sala de problemas como anfitrión" en la vista `initial_choice` y la definición de la constante `isSocio` (que se usa para la `admin_view`) utilicen la misma lógica y la fuente correcta del rol/estado de socio.
+
+3.  **Carga Asíncrona del Perfil (si aplica):**
+    * ¿El `AuthContext` provee alguna indicación de que el `profile` (con los datos de la tabla `profiles`) aún se está cargando? Si `GamePage.tsx` se renderiza antes de que `profile.role` (o `profile.socio`) esté disponible, la condición podría fallar. Si es así, ¿cómo deberíamos manejar este estado de carga en `GamePage.tsx` antes de intentar evaluar el rol?
+
+Necesito que el botón "Crear sala de problemas como anfitrión" aparezca correctamente para los usuarios que son socios, para que puedan acceder a la `admin_view`.

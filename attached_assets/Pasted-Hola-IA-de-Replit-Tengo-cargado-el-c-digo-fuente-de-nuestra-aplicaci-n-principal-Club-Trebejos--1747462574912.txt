@@ -1,0 +1,57 @@
+Hola IA de Replit,
+
+Tengo cargado el código fuente de nuestra aplicación principal "Club Trebejos" (Vite/React/TypeScript con Supabase para backend y autenticación). Queremos implementar una nueva funcionalidad robusta para que nuestros usuarios puedan jugar y crear sesiones de entrenamiento de tácticas de ajedrez en tiempo real, similar a una aplicación prototipo que hemos desarrollado llamada "Trebejos Game".
+
+Te proporcionaré los archivos clave de "Trebejos Game" para que entiendas su lógica y funcionalidad. Tu tarea será guiarme sobre cómo podríamos implementar una funcionalidad similar directamente DENTRO de "Club Trebejos", aprovechando su estructura existente (autenticación Supabase, roles, componentes de UI, etc.) y su base de datos (especialmente la tabla tactics_puzzles).
+
+Descripción Funcional Clave de "Trebejos Game" (cuyos archivos de referencia te estoy pasando):
+
+Backend (server/index.js de "Trebejos Game"):
+
+Utiliza Node.js, Express y Socket.IO.
+Gestiona "sesiones de juego" en tiempo real (creación, unión de jugadores con apodos, estado de la sesión en memoria).
+Un "administrador de sesión" configura problemas para la sesión (FEN, línea principal de solución, tiempo, puntos).
+Valida las jugadas de los jugadores contra la línea principal usando chess.js.
+Si la jugada del jugador es correcta, el servidor "responde" con la siguiente jugada de la línea principal (como si fuera un oponente), actualizando el FEN.
+Calcula puntos (considerando corrección y tiempo).
+Sincroniza el estado del juego (nuevo FEN, jugada del oponente, resultados, clasificaciones) con todos los clientes en la sesión mediante eventos de Socket.IO.
+Frontend (src/... de "Trebejos Game"):
+
+SocketContext.tsx: Maneja la conexión del cliente al servidor Socket.IO.
+Home.tsx: Página para unirse a una sesión con ID y apodo, o ir al panel de admin.
+AdminDashboard.tsx: Interfaz para que un "administrador de sesión" cree sesiones, defina el número de problemas, configure cada problema (ChessPuzzleSetup.tsx con react-chessboard), vea jugadores (PlayerList.tsx), y controle el juego (GameControls.tsx para lanzar, revelar, siguiente).
+PlayerRoom.tsx: Vista principal del jugador que muestra WaitingRoom.tsx, PuzzleView.tsx (tablero interactivo con react-chessboard para que el jugador envíe movimientos), o ResultsView.tsx.
+Objetivos de la Nueva Funcionalidad DENTRO de "Club Trebejos":
+
+Autenticación de "Club Trebejos": Los jugadores serán usuarios de "Club Trebejos" autenticados con Supabase. Sus user_id y roles (socio, site_admin de la tabla profiles) serán la base de la identidad y permisos. El backend en tiempo real (que podría ser una adaptación del server/index.js de "Trebejos Game" corriendo en Render, o una nueva solución con Supabase Realtime/Edge Functions) deberá validar tokens JWT de Supabase.
+Permisos:
+Los usuarios con rol de "socio" en "Club Trebejos" podrán crear "desafíos de táctica" (equivalente a ser "Administrador de Sesión").
+Todos los usuarios registrados podrán unirse a estos desafíos/partidas.
+Problemas de Táctica: Se usarán problemas de la tabla tactics_puzzles de "Club Trebejos". Los "socios" podrían también definir problemas ad-hoc (FEN/solución) para sus desafíos.
+Interfaz: Se creará una nueva sección/página en "Club Trebejos" (ej., en GamePage.tsx o una nueva ruta) para esta funcionalidad, utilizando los componentes de UI de shadcn/ui de "Club Trebejos" para consistencia.
+Tu Tarea (IA de Replit):
+
+Basándote en tu conocimiento de la estructura actual de "Club Trebejos" (el código que tienes cargado) y en la descripción y los archivos de referencia de "Trebejos Game" que te estoy proporcionando:
+
+Propón una estrategia de alto nivel para implementar esta funcionalidad de juego de tácticas en tiempo real dentro de "Club Trebejos".
+
+¿En qué archivos o directorios existentes de "Club Trebejos" recomendarías crear los nuevos componentes y la lógica del frontend del juego? (Considera src/pages/GamePage.tsx, src/components/, src/contexts/).
+¿Cómo sugieres manejar la comunicación en tiempo real? ¿Deberíamos adaptar el server/index.js de "Trebejos Game" (para que corra en Render y valide JWTs de Supabase) o explorar el uso de Supabase Realtime / Edge Functions para la lógica del servidor de juego? (Si sugieres adaptar el servidor Node.js, enfócate en cómo el frontend de Club Trebejos se conectaría a él).
+Para la primera fase de implementación, que será la autenticación y la conexión inicial:
+
+¿Cómo modificarías el AuthContext.tsx o el GamePage.tsx de "Club Trebejos" para que un usuario autenticado pueda iniciar una conexión Socket.IO (hacia el servidor de juego adaptado) enviando su token JWT de Supabase?
+Si decidimos adaptar el server/index.js de "Trebejos Game" (que te he pasado), ¿cuáles serían los pasos clave para que implemente la validación de tokens JWT de Supabase usando una variable de entorno SUPABASE_JWT_SECRET?
+Identifica los principales desafíos o consideraciones que ves al integrar la lógica de react-chessboard y chess.js (del PuzzleView.tsx y ChessPuzzleSetup.tsx de "Trebejos Game") dentro de los componentes React de "Club Trebejos".
+
+Por favor, proporciona tu análisis y las primeras líneas de acción o ejemplos de código para los puntos más críticos que identifiques dentro de "Club Trebejos" o en la adaptación del server/index.js de "Trebejos Game".
+
+Archivos de "Trebejos Game" que te proporciono como referencia principal:
+
+server/index.js
+src/pages/AdminDashboard.tsx
+src/pages/PlayerRoom.tsx
+src/components/player/PuzzleView.tsx
+src/components/admin/ChessPuzzleSetup.tsx
+src/context/SocketContext.tsx (Puedes pedir más si los necesitas)
+El objetivo es que me des un plan claro y los primeros pasos de código para que podamos empezar a construir esta funcionalidad directamente en "Club Trebejos", usando "Trebejos Game" como una guía muy detallada de la lógica a implementar."
+

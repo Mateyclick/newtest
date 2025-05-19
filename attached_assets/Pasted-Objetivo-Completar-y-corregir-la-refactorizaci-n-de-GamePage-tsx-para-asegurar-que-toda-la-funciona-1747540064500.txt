@@ -1,0 +1,50 @@
+Objetivo: Completar y corregir la refactorización de GamePage.tsx para asegurar que toda la funcionalidad original se mantenga, con un enfoque especial en resolver por qué "Lanzar Problema" no funciona.
+
+Contexto:
+Se ha realizado una refactorización de GamePage.tsx en los siguientes archivos:
+
+src/hooks/useGameSession.ts (para lógica y estado compartidos de la sesión de juego)
+src/components/game/InitialChoiceView.tsx
+src/components/game/PlayerView.tsx
+src/components/game/AdminView.tsx
+src/pages/GamePage.tsx (ahora un contenedor de vistas)
+Esta nueva estructura es muy buena, pero parece haber algunas omisiones críticas en el manejo de eventos y estado que están impidiendo que funcione correctamente, notablemente la acción "Lanzar Problema".
+
+Problemas Identificados en la Estructura Refactorizada:
+
+Falta el Manejo de session_created por el Admin:
+
+Cuando el admin emite create_session desde AdminView.tsx, el servidor responde con session_created ({ sessionId, initialPlayers }).
+Actualmente, ni AdminView.tsx ni useGameSession.ts escuchan este evento.
+Impacto Crítico: gameState.sessionId (que AdminView obtiene de useGameSession) no se actualiza con el ID de la nueva sesión. Como resultado, handleLaunchPuzzle en AdminView probablemente no emite el evento launch_puzzle porque gameState.sessionId está vacío. Esto explicaría por qué "Lanzar Problema" no hace nada.
+Acción Requerida: Implementar un listener para session_created (probablemente en useGameSession.ts o AdminView.tsx si el estado sessionId se gestiona allí directamente tras la creación) que actualice gameState.sessionId y, si se recibe initialPlayers, también sessionPlayers.
+Falta el Manejo de session_joined por el Jugador:
+
+Cuando un jugador emite join_session desde PlayerView.tsx, el servidor responde con session_joined ({ sessionId, players, currentPuzzleData, ... }).
+Actualmente, ni PlayerView.tsx ni useGameSession.ts escuchan este evento.
+Impacto Crítico: El jugador no recibe la confirmación ni el estado inicial de la sesión.
+Acción Requerida: Implementar un listener para session_joined (probablemente en useGameSession.ts o PlayerView.tsx) que actualice gameState.sessionId, sessionPlayers, currentPuzzle (ver punto siguiente), etc., para el jugador que se une.
+Gestión y Exposición de currentPuzzle desde useGameSession:
+
+useGameSession.ts escucha puzzle_launched ({ puzzle, endTime }) pero solo actualiza gameState.puzzleActive y endTime. No parece gestionar ni devolver un estado para el objeto puzzle en sí (que contiene FEN, puntos, etc.).
+Tanto PlayerView.tsx como AdminView.tsx (si muestra el puzle) necesitan acceder a los datos del currentPuzzle para pasárselos al componente PuzzleView.tsx.
+Acción Requerida: Modificar useGameSession.ts para que:
+Tenga un estado currentPuzzle.
+Actualice este estado currentPuzzle cuando se reciba el evento puzzle_launched (con data.puzzle).
+Devuelva currentPuzzle y setCurrentPuzzle (o una forma de actualizarlo) para que los componentes de vista puedan usarlo.
+Asegurar que PlayerView.tsx (y AdminView.tsx si es relevante) consuman este currentPuzzle del hook en lugar de tener su propio estado local desconectado.
+Argumento Faltante en useSaveCurrentSetupAsUserTactic (en AdminView.tsx):
+
+La llamada actual en AdminView.tsx es: useSaveCurrentSetupAsUserTactic(puzzlesConfig, currentPuzzleIndexForSetup, puzzleNameInput, puzzleDescriptionInput, puzzleDifficultyInput, puzzleTagsInput).
+Le falta el argumento userId (que debería ser user?.id || '').
+Acción Requerida: Corregir la llamada para incluir user?.id || '' como el cuarto argumento.
+(Opcional pero Recomendado) Listener de Errores Genérico:
+
+Considera restaurar un listener genérico socket.on('custom_error', ({ message }) => { ... }) (o el nombre de evento que use el servidor para errores generales) para mostrar feedback al usuario (ej: en PlayerView.tsx para errores al unirse, o de forma más global).
+Tu Tarea (IA del Frontend):
+
+Prioridad Máxima: Modifica useGameSession.ts (o los componentes AdminView.tsx/PlayerView.tsx si es más apropiado para ciertos eventos) para manejar correctamente los eventos session_created (actualizando sessionId y sessionPlayers para el admin) y session_joined (actualizando el estado para el jugador que se une). Esto es crucial para que "Lanzar Problema" funcione, ya que handleLaunchPuzzle depende de gameState.sessionId.
+Asegura que useGameSession.ts gestione y devuelva el estado de currentPuzzle, y que PlayerView.tsx/AdminView.tsx lo utilicen.
+Corrige la llamada al hook useSaveCurrentSetupAsUserTactic en AdminView.tsx para incluir el userId.
+Si lo consideras oportuno, reintroduce un manejador para errores genéricos del socket.
+Revisa que todas las dependencias de useEffect en los componentes modificados y en useGameSession.ts sean correctas después de estos cambios.

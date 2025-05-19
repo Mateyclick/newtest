@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "composite": true,                // AÑADIDO: Requerido por ser referenciado
+    "skipLibCheck": true,
+    "module": "ESNext",               // Para vite.config.ts moderno, ESNext está bien
+    "moduleResolution": "bundler",    // "bundler" es la opción moderna y recomendada por Vite
+    "allowSyntheticDefaultImports": true, // Buena práctica con moduleResolution: bundler
+    "strict": true,
+    "noEmit": false,                  // CAMBIO: De true a false, o puedes eliminar esta línea.
+                                      // Los archivos de Node (como vite.config.ts) SÍ necesitan emitir JS.
+    // Opciones que pueden ser útiles para un entorno Node.js moderno con Vite:
+    "target": "ES2022",               // Ya lo tenías, está bien
+    "lib": ["ES2023"],                // Ya lo tenías, está bien
+    "allowImportingTsExtensions": true, // Ya lo tenías
+    "isolatedModules": true,          // Ya lo tenías
+    "moduleDetection": "force",       // Ya lo tenías
+    "noUnusedLocals": false,          // Ya lo tenías
+    "noUnusedParameters": false,      // Ya lo tenías
+    "noFallthroughCasesInSwitch": true// Ya lo tenías
+  },
+  "include": ["vite.config.ts", "postcss.config.js", "tailwind.config.js"] // Ajusta si usas TS para postcss o tailwind configs
+}

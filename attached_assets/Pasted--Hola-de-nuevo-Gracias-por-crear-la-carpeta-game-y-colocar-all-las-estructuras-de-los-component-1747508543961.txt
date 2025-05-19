@@ -1,0 +1,36 @@
+¡Hola de nuevo! Gracias por crear la carpeta `game/` y colocar allí las estructuras de los componentes.
+
+Los componentes `GameControls.tsx`, `GameSessionInfo.tsx`, `PlayerList.tsx`, y `WaitingRoom.tsx` se ven muy bien y parecen listos para ser usados con props desde `GamePage.tsx`, incluyendo el uso de los componentes `<Button>` de shadcn/ui.
+
+**Contexto Actual en "Club Trebejos":**
+Actualmente, cuando un usuario navega a la página de juego en "Club Trebejos" (`GamePage.tsx`), esta página establece la conexión con el servidor de "Trebejos Game" a través del `GameSocketContext.tsx`. Vemos el mensaje "Conectando...", la conexión se establece exitosamente (lo confirmamos por los logs del servidor que verifican el token JWT), pero después de esto, **la página se queda en blanco.**
+Esto ocurre porque `GamePage.tsx` aún no tiene la lógica para renderizar el estado inicial del juego (ej. una lista de sesiones para unirse, un botón para crear sesión si el usuario es "socio", o una sala de espera si ya se unió a una sesión pero no hay puzzle activo).
+
+**Nuestro objetivo inmediato es empezar a poblar `GamePage.tsx` con la interfaz y lógica necesarias.** Para ello, necesitamos completar la adaptación de la **lógica interna** de:
+
+1.  **`src/components/juego/ChessPuzzleSetup.tsx`**
+2.  **`src/components/juego/PuzzleView.tsx`**
+
+Actualmente, estos archivos tienen el comentario `// All original component logic remains here` y `// Original JSX remains here`. Por favor, procede a:
+
+**Para `src/components/juego/ChessPuzzleSetup.tsx`:**
+1.  **Reimplementa la lógica original del componente**, pero asegurando que:
+    * **No utilice `useSocket` del `SocketContext` original de "Trebejos Game".**
+    * Si necesita interactuar con el socket (por ejemplo, para emitir un evento si el `onUpdate` prop se usara para una validación en tiempo real con el servidor, aunque es más probable que `onUpdate` solo actualice el estado en `GamePage.tsx`), debe poder hacerlo a través de una instancia de `socket` que recibiría de `GameSocketContext.tsx` (puedes asumir que `GamePage.tsx` se la pasa como prop llamada `socketProp` o que el componente se adaptará para usar `useContext(GameSocketContext)` directamente). Por ahora, para la lógica interna de edición del tablero (`chess.js`, manejo de FEN, paleta, etc.), no debería necesitar el socket directamente, ya que el callback `onUpdate` notificará a `GamePage.tsx` de los cambios.
+    * La función `onUpdate` (que ya es una prop) será la forma principal en que este componente comunica los cambios en la configuración del puzzle (`position`, `mainLine`, `timer`, `points`) a su padre (`GamePage.tsx`).
+    * Mantén toda la lógica de `chess.js`, manejo del FEN, la paleta de piezas, el modo borrar, y los inputs de configuración.
+    * Asegúrate de que las importaciones (`react-chessboard`, `chess.js`, `lucide-react`) sean correctas para el entorno de "Club Trebejos".
+
+**Para `src/components/juego/PuzzleView.tsx`:**
+1.  **Reimplementa la lógica original del componente**, pero asegurando que:
+    * **No utilice `useSocket` del `SocketContext` original de "Trebejos Game".**
+    * La función `onMoveAttempt` (que ya es una prop) será llamada cuando el usuario intente una jugada. `GamePage.tsx` (el padre) recibirá este `moveSAN` y será responsable de emitir el evento `submit_answer` al servidor usando el `socket` del `GameSocketContext.tsx`. Por lo tanto, `PuzzleView.tsx` **no debe emitir eventos de socket directamente.**
+    * Toda la lógica de `chess.js` para validar movimientos locales (antes de llamar a `onMoveAttempt`), el manejo del temporizador (`timeLeft`), la interacción con `react-chessboard` (`onSquareClick`, resaltado), debe mantenerse.
+    * El estado `timeLeft` debe seguir funcionando como en el original, basándose en la prop `endTime` y `puzzleActive`.
+    * Asegúrate de que las importaciones sean correctas.
+
+**En resumen:** Queremos que estos dos componentes sean funcionalmente idénticos a sus versiones originales de "Trebejos Game" en términos de UI y lógica de ajedrez, pero que su comunicación con el "mundo exterior" (servidor, estado global) se haga a través de las props y callbacks definidos, preparándolos para ser controlados por `GamePage.tsx` en "Club Trebejos" y usando el `socket` del `GameSocketContext.tsx` de forma indirecta (a través de `GamePage.tsx`).
+
+**Nota Adicional:** Una vez que estos componentes tengan su lógica interna adaptada, el siguiente paso será que `GamePage.tsx` comience a utilizarlos, manejando el estado del juego (si hay una sesión activa, si el usuario es admin de esa sesión, si hay un puzzle activo, etc.) para decidir cuándo renderizar `ChessPuzzleSetup.tsx`, `PuzzleView.tsx`, `WaitingRoom.tsx`, etc. Tu trabajo en estos dos componentes es fundamental para desbloquear esa siguiente fase y que `GamePage.tsx` deje de estar en blanco después de la conexión.
+
+Por favor, modifica los archivos en `src/components/juego/` con esta lógica interna implementada.

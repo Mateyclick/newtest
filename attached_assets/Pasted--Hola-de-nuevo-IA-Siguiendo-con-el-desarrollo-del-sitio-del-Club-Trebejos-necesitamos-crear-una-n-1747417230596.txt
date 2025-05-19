@@ -1,0 +1,43 @@
+¡Hola de nuevo, IA! Siguiendo con el desarrollo del sitio del Club Trebejos, necesitamos crear una nueva página informativa: /info-socios.
+
+Contexto:
+En la página /juego (GamePage.tsx), hay un enlace que dice "Hazte socio del Club Trebejos" que apunta a /info-socios. Esta nueva página /info-socios debe detallar los beneficios de ser socio y proporcionar una forma de contacto para asociarse.
+
+Objetivo:
+Crear el componente de página src/pages/InfoSocios.tsx y añadir la ruta /info-socios en App.tsx.
+
+Instrucciones Detalladas para src/pages/InfoSocios.tsx:
+
+Estructura General de la Página:
+
+Debe incluir los componentes Navbar y Footer del proyecto para mantener la coherencia visual.
+El contenido principal debe estar centrado y ser responsivo (puedes usar container mx-auto px-4 y un max-w- apropiado, similar a otras páginas informativas del sitio).
+Debe tener un encabezado de página claro (ej. un <h1> que diga "Beneficios de Ser Socio del Club Trebejos" o similar, y quizás un subtítulo).
+Contenido - Lista de Beneficios de Socio:
+Presenta los siguientes beneficios de ser socio de forma clara y atractiva (puedes usar una lista, tarjetas pequeñas para cada beneficio, o el diseño que consideres más estético y legible):
+
+Actividades libres 2 veces por semana.
+Torneos exclusivos para socios.
+1 torneo gratuito de cada temporalidad anual (Blitz, Rápido, Estándar).
+Acceso a la biblioteca física de Trebejos.
+Acceso a "Trebejos Game" con funcionalidades avanzadas: pudiendo crear problemas, desafiar amigos y entrar a juegos de tácticas grupales. (IA, siéntete libre de usar iconos de lucide-react al lado de cada beneficio si crees que mejora la presentación).
+Llamada a la Acción - Botón "Hazte Socio":
+
+Incluye un botón prominente (usando Button de shadcn/ui, quizás con size="lg") que diga "¡Hazte Socio Ahora!" o "Quiero Ser Socio".
+Este botón debe ser un enlace que abra una conversación de WhatsApp. Matías (el desarrollador) proveerá el número de teléfono y el mensaje predefinido para el enlace de WhatsApp. Por ahora, puedes usar un placeholder para el enlace o un alert() que diga "Redirigir a WhatsApp para inscripción".
+Formato del enlace WhatsApp: https://wa.me/NUMERODETELEFONO?text=MENSAJEENCODIFICADOURL
+(Ej. si el número es +598xxxxxxxxx y el mensaje "Hola, quiero información para hacerme socio del Club Trebejos", el enlace sería: https://wa.me/598xxxxxxxxx?text=Hola%2C%20quiero%20informaci%C3%B3n%20para%20hacerme%20socio%20del%20Club%20Trebejos)
+Estética y Responsividad:
+
+La página debe seguir la estética general del sitio Club Trebejos (colores, fuentes font-playfair, font-rubik, font-lora, uso de componentes shadcn/ui).
+Debe ser totalmente responsiva y verse bien en dispositivos móviles.
+Modificación de App.tsx:
+
+Importa el nuevo componente InfoSocios (desde src/pages/InfoSocios.tsx).
+Añade la nueva ruta /info-socios dentro del componente <Routes>, que renderice el componente InfoSocios. Esta página no necesita estar protegida por ProtectedRoute, ya que es informativa para todos.
+Resultado Esperado:
+Nos gustaría que nos proporciones:
+
+El código completo para el nuevo archivo src/pages/InfoSocios.tsx.
+La línea de importación y la línea de <Route ... /> que debemos añadir a App.tsx.
+¡Confiamos en tu habilidad para crear una página informativa, estética y funcional, IA! ¡Gracias!"

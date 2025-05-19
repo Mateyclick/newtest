@@ -1,0 +1,60 @@
+¡El `GamePage.tsx` para la vista de administrador está quedando muy completo! Buen trabajo integrando `GameControls` y `PlayerList`.
+
+Ahora, necesitamos desarrollar la lógica y el renderizado para cuando `view === 'player_view'`. Actualmente, solo muestra un `<PuzzleView />` con datos por defecto o el último estado del admin, lo cual no es el flujo correcto para un jugador.
+
+**Tarea para `GamePage.tsx` - Sección del Jugador (cuando `view === 'player_view'`):**
+
+1.  **Estado Adicional Necesario en `GamePage.tsx` (para la vista de jugador):**
+    * `availableSessions: Array<{ id: string, name: string, playerCount: number }>` (para la lista de sesiones a las que unirse, inicializado a `[]`).
+    * `joinSessionIdInput: string` (para el input donde el jugador puede escribir un ID de sesión, inicializado a `''`).
+
+2.  **Listeners de Socket Adicionales/Modificados en `GamePage.tsx`:**
+    * **`available_sessions_update`**: Nuevo listener. Cuando el servidor emita este evento con un array de sesiones, actualiza el estado `availableSessions`. (El servidor necesitará emitir esto periódicamente o cuando se creen/cierren sesiones).
+    * **`session_joined`**: (Ya existe un listener, pero necesitamos asegurarnos de su comportamiento para el jugador). Cuando un jugador se une exitosamente:
+        * Actualiza `gameState.sessionId`.
+        * Actualiza `sessionPlayers`.
+        * Actualiza `playerProgressView` para este jugador a 'waiting'.
+        * Si el evento `session_joined` del servidor incluye el estado actual del puzzle (`currentPuzzle` y `endTime` si está activo), actualiza `currentPuzzle` y `gameState`.
+    * **`error`**: (Si no existe, añadirlo). Escuchar eventos de error del servidor (ej. "sesión no encontrada", "nickname tomado" - aunque nickname ya no lo pedimos, pero otros errores pueden surgir) y mostrar un mensaje al usuario.
+
+3.  **Nuevas Funciones Handler en `GamePage.tsx`:**
+    * `handleJoinSession(sessionIdToJoin: string)`: Emite `socket?.emit('join_session', { sessionId: sessionIdToJoin });`. Esta función se llamará al hacer clic en una sesión de la lista o al enviar el ID del input.
+    * `handleRefreshSessions()`: (Opcional, pero útil) Emite `socket?.emit('get_available_sessions');` para pedir al servidor la lista actualizada.
+
+4.  **Renderizado Condicional dentro de `if (view === 'player_view')`:**
+
+    * **Si `!gameState.sessionId` (el jugador NO se ha unido a ninguna sesión todavía):**
+        * Mostrar un título como "Unirse a una Sesión de Tácticas".
+        * **(Opción A: Lista de Sesiones)**
+            * Renderizar una lista de las `availableSessions`. Cada item de la lista debe mostrar el nombre de la sesión, el ID, y el número de jugadores.
+            * Cada item debe tener un botón "Unirse" que llame a `handleJoinSession(session.id)`.
+            * Un botón "Actualizar Lista" que llame a `handleRefreshSessions()`.
+        * **(Opción B: Input de ID)** (Puede coexistir con la Opción A o ser la única si la lista es compleja de implementar inicialmente)
+            * Un input de texto vinculado al estado `joinSessionIdInput`.
+            * Un botón "Unirse con ID" que llame a `handleJoinSession(joinSessionIdInput)`.
+        * Mostrar mensajes de error si `handleJoinSession` falla (basado en el evento `error` del socket).
+
+    * **Si `gameState.sessionId` existe (el jugador YA ESTÁ en una sesión):**
+        * Renderizar `<GameSessionInfo />` (pasándole las props correspondientes del estado de `GamePage.tsx`).
+        * **Si `showResultsView` es `true` y `resultsData` existe:**
+            * Renderizar `<ResultsView results={resultsData} currentPlayerNickname={profile?.nickname || user?.email} />` (necesitamos pasar el nickname/email del jugador actual).
+        * **Else if `gameState.puzzleActive` es `true` y `currentPuzzle.position` tiene valor:**
+            * Renderizar `<PuzzleView position={currentPuzzle.position} points={currentPuzzle.points} endTime={gameState.endTime} onMoveAttempt={handleMoveAttempt} hasSubmittedOrCompleted={gameState.hasSubmittedOrCompleted} puzzleActive={gameState.puzzleActive} />`.
+        * **Else (ni resultados, ni puzzle activo -> está esperando):**
+            * Renderizar `<WaitingRoom players={sessionPlayers} />`.
+
+**Objetivo de este Paso:**
+Que un jugador pueda:
+1. Ver una forma de unirse a una sesión (ya sea por lista o por ID).
+2. Una vez unido, ver la `GameSessionInfo`.
+3. Ver `WaitingRoom` si no hay puzzle.
+4. Ver `PuzzleView` si hay un puzzle activo.
+5. Ver `ResultsView` cuando se muestren los resultados.
+
+**Nota sobre el Servidor:**
+Para que la lista de sesiones disponibles funcione, el servidor `server/index.js` necesitará:
+1. Un evento `get_available_sessions` que el cliente pueda emitir.
+2. Al recibirlo, el servidor debe construir un array con la información de las sesiones activas (id, nombre, playerCount) y emitir `available_sessions_update` de vuelta al cliente que lo solicitó (o a todos).
+3. Emitir `available_sessions_update` a todos los clientes conectados cada vez que una sesión se crea o se cierra (o el playerCount cambia significativamente).
+
+Avísame cuando la IA te devuelva esto para seguir con las "cosas nuevas" o refinar algo. Y recuerda, el servidor necesitará esos cambios que ya listamos para que todo esto se conecte de verdad.

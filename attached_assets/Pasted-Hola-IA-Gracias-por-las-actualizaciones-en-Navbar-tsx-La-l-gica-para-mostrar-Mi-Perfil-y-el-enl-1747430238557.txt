@@ -1,0 +1,39 @@
+Hola IA,
+
+Gracias por las actualizaciones en Navbar.tsx. La lógica para mostrar 'Mi Perfil' y el enlace a 'Trebejos Game' cuando el usuario está logueado funciona bien.
+
+Ahora necesitamos añadir un último enlace al Navbar: un enlace 'Administrar' que solo sea visible para los usuarios que tienen el rol de site_admin.
+
+Por favor, modifica el archivo src/components/Navbar.tsx existente para incluir lo siguiente:
+
+En la Navegación de Escritorio (<nav className="hidden md:flex ...">):
+
+Después del enlace a "Trebejos Game" (o donde consideres apropiado en la secuencia de enlaces), añade un nuevo enlace de texto.
+Texto del enlace: "Panel Admin" (o "Administrar").
+Debe apuntar a la ruta: /admin.
+Visibilidad Condicional: Este enlace "Panel Admin" debe ser visible ÚNICAMENTE si profile?.roles?.site_admin === true. (Asegúrate de que profile se obtenga de useAuth()).
+El estilo debe ser consistente con los otros enlaces del Navbar.
+En el Menú Móvil (<nav className="md:hidden ...">):
+
+Dentro del array que genera los NavLink para el menú móvil, añade un nuevo objeto para el enlace "Panel Admin".
+label: "Panel Admin", to: "/admin".
+Visibilidad Condicional: Este ítem de menú debe añadirse al array ÚNICAMENTE si profile?.roles?.site_admin === true.
+Puedes hacerlo así al construir el array de ítems para el móvil:
+JavaScript
+
+// Ejemplo de cómo añadirlo condicionalmente al array del menú móvil
+let mobileNavItems = [
+  { label: "Inicio", to: "/" },
+  // ... otros items ...
+  { label: "Tienda", to: "/tienda" },
+  ...(user ? [{ label: "Mi Perfil", to: "/perfil" }] : []),
+  ...(user ? [{ label: "Trebejos Game", to: "/juego" }] : []) // Añadir enlace a Trebejos Game si está logueado
+];
+
+if (profile?.roles?.site_admin) {
+  mobileNavItems.push({ label: "Panel Admin", to: "/admin" });
+}
+// Luego mapeas mobileNavItems
+Por favor, proporciona la versión actualizada del archivo src/components/Navbar.tsx con este enlace de 'Panel Admin' condicional implementado tanto para la vista de escritorio como para el menú móvil.
+
+¡Gracias!"

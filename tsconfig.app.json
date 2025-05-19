@@ -1,0 +1,27 @@
+{
+  "extends": "./tsconfig.json", // Que herede del tsconfig principal
+  "compilerOptions": {
+    "composite": true,        // NECESARIO
+    "outDir": "dist",         // O algún directorio de salida, aunque Vite lo ignore, TS puede necesitarlo
+    "noEmit": false,          // IMPORTANTE: No puede ser true si composite es true y no hay "declaration": true
+                              // O simplemente elimina esta línea 'noEmit' para que tome el default de 'composite'
+
+    // Sobrescribe o define opciones específicas para la app si es necesario
+    // Muchas de estas ya las tienes y están bien:
+    "target": "ESNext",
+    "useDefineForClassFields": true,
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler", // Mantén "bundler" si te funciona bien con Vite
+    "jsx": "react-jsx",
+    "jsxImportSource": "react",
+    "paths": { // Paths del tsconfig principal se heredan, pero puedes sobreescribir si es necesario
+      "@/*": ["./src/*"]
+    },
+    "types": ["vite/client"]
+    // "isolatedModules": true, // Esto puede ser conflictivo con "composite: true" a veces. Prueba quitándolo si el error persiste.
+    // "allowImportingTsExtensions": true, // Si noEmit es false, esto está bien.
+  },
+  "include": ["src"], // Asegúrate que el "include" sea correcto para los archivos de tu app
+  "exclude": ["node_modules", "dist", "vite.config.ts", "postcss.config.js", "tailwind.config.js"] // Excluye archivos de config de node
+}

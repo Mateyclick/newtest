@@ -1,0 +1,40 @@
+Objetivo: Diagnosticar y solucionar un problema en el cliente React donde la vista del administrador de una sala de juego muestra "0 jugadores conectados", mientras que la vista de un jugador normal en la misma sala sí muestra la lista correcta de participantes (incluido el administrador).
+
+Contexto General del Proyecto:
+
+Frontend en React con TypeScript, Vite, Tailwind CSS.
+Autenticación con Supabase (manejada por AuthContext.tsx).
+Comunicación en tiempo real con un servidor Socket.IO (manejada por GameSocketContext.tsx y un archivo server.js en el backend).
+El juego es de puzles de ajedrez.
+Flujo de Eventos Relevantes (Servidor -> Cliente):
+
+Cuando un administrador crea una sesión, el servidor emite session_created solo al administrador. Inmediatamente después, el servidor (versión actual) añade al administrador a la lista de jugadores de la sesión y emite un evento leaderboard_updated a toda la sala (que en ese momento solo contiene al administrador). Este evento leaderboard_updated lleva un array con los datos de los jugadores.
+Cuando un segundo jugador se une a la sesión, el servidor emite session_joined solo a ese nuevo jugador (este evento también puede contener la lista de jugadores y un flag isAdmin). Además, el servidor vuelve a emitir leaderboard_updated a toda la sala, ahora con la lista actualizada que incluye al administrador y al nuevo jugador.
+Problema Específico en el Cliente React:
+Se han observado los siguientes comportamientos después de aplicar las últimas correcciones al servidor (el servidor ahora añade al admin a la lista de jugadores en create_session y envía leaderboard_updated):
+
+Cliente del Jugador No-Admin (ej: poketmati@gmail.com): Funciona correctamente. Después de unirse a una sesión creada por el admin (mateyclickuy@gmail.com), este cliente muestra "Jugadores en la Sala (2)" y lista correctamente al admin y a sí mismo (según captura de pantalla ...23.43.31.png).
+Cliente del Administrador (ej: mateyclickuy@gmail.com): No funciona correctamente. Después de crear la sesión (y aunque el otro jugador se haya unido), este cliente muestra "0 jugadores conectados" (o un mensaje similar indicando una lista vacía).
+Logs del Servidor:
+Los logs del servidor confirman que:
+
+Ambos usuarios (admin y jugador) se autentican correctamente.
+El admin crea la sesión.
+El jugador se une a la misma sesión.
+El servidor emite los eventos leaderboard_updated (con la lista de jugadores, que debería ser correcta y completa) a la sala de la sesión en los momentos apropiados.
+Teoría Actual sobre la Causa del Problema (Enfoque Frontend):
+Dado que el cliente del jugador no-admin SÍ muestra la lista correcta (lo que sugiere que el servidor está enviando los datos correctos al menos a ese cliente), la teoría principal es que el problema reside en el código del cliente React del administrador. Las posibles causas específicas en el frontend del admin podrían ser:
+
+Error al Escuchar o Procesar el Evento leaderboard_updated: El componente del admin podría no estar suscribiéndose correctamente al evento leaderboard_updated, o podría haber un error en la función callback que maneja los datos recibidos, impidiendo que el estado de la lista de jugadores se actualice.
+Error en la Lógica de Renderizado Condicional: La interfaz del admin podría tener una lógica de renderizado (quizás basada en el estado isAdmin u otro estado) que erróneamente oculta la lista de jugadores o muestra "0 jugadores" incluso cuando los datos están presentes en el estado del componente.
+Gestión de Estado Defectuosa: El estado que almacena la lista de jugadores en el componente del admin podría no estar actualizándose correctamente, o podría estar siendo sobrescrito o reseteado incorrectamente.
+Errores de JavaScript no Detectados: Podría haber errores de JavaScript en la consola del navegador del cliente admin que estén interrumpiendo la ejecución normal del código que maneja la lista de jugadores.
+Tu Tarea (IA del Frontend):
+
+Revisa el código de los componentes React responsables de mostrar la sala de juego y la lista de jugadores, especialmente desde la perspectiva del usuario administrador. Presta atención a cómo se suscribe y maneja el evento leaderboard_updated del socket, cómo se actualiza el estado de la lista de jugadores y cómo se renderiza esa lista.
+Considera cómo el estado isAdmin (si se utiliza para diferenciar la UI) podría estar afectando la visualización de la lista de jugadores.
+Evalúa la "Teoría Actual" presentada.
+Si la teoría te parece plausible o si identificas un área problemática basada en ella: Por favor, describe cómo repararías el código del frontend (qué archivos/componentes revisarías, qué lógica cambiarías) o, si es posible, proporciona el fragmento de código corregido.
+Si crees que la "Teoría Actual" es incorrecta o incompleta, o si no encuentras una solución obvia basada en ella: Por favor, analiza el código del frontend y presenta tu propia teoría sobre por qué el cliente del administrador está fallando en mostrar la lista de jugadores. Indica qué partes del código te gustaría inspeccionar más a fondo o qué información adicional (como logs específicos del cliente) necesitarías.
+Información Adicional (si la necesitas más adelante):
+Estamos preparados para añadir console.log en el cliente React para rastrear los datos recibidos por los eventos leaderboard_updated y session_joined en ambos clientes (admin y jugador) si eso ayuda a tu análisis.

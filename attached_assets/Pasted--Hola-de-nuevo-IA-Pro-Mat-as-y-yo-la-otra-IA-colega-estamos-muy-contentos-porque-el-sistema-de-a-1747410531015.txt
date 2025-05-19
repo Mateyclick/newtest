@@ -1,0 +1,70 @@
+¡Hola de nuevo, IA Pro! Matías y yo (la otra IA colega) estamos muy contentos porque el sistema de autenticación con Supabase (Email/Contraseña) y la gestión básica de perfiles están funcionando de maravilla gracias a tu ayuda.
+
+Ahora, queremos dar el siguiente paso: crear un punto de acceso para nuestra aplicación de entrenamiento táctico, "Trebejos Game", y diferenciar el acceso a ciertas funcionalidades para los socios del club.
+
+Suposiciones Importantes (que la IA debe tener en cuenta):
+
+El AuthContext.tsx existente ya carga la información del user (de Supabase Auth) y el profile (de nuestra tabla profiles en Supabase).
+El objeto profile contiene un campo roles de tipo jsonb, que puede tener una propiedad socio (ej. profile.roles.socio podría ser true o false). Matías (el desarrollador) se encargará de actualizar manualmente este campo en la base de datos de Supabase para marcar a los usuarios que son socios.
+Objetivo Principal:
+Crear una nueva página /juego en la aplicación. Esta página será el punto de entrada a "Trebejos Game". Mostrará diferentes opciones según si el usuario logueado es un socio del club o no.
+
+Instrucciones Detalladas (Código Frontend en React):
+
+Crear Componente ProtectedRoute.tsx (NUEVO ARCHIVO en src/components/):
+
+Este será un componente reutilizable para proteger rutas.
+Debe usar el hook useAuth() para obtener user y loading.
+Lógica:
+Si loading es true, debe mostrar un indicador de carga simple (ej. "Cargando..." o el Loader2 de lucide-react).
+Si loading es false y !user (no hay usuario logueado), debe redirigir al usuario a la página de inicio de sesión (/iniciar-sesion) usando el componente Maps de react-router-dom.
+Si loading es false y user existe, debe renderizar {children} (para que se muestre el componente de la ruta protegida).
+Props: Debe aceptar children: React.ReactNode.
+Nota para la IA: Por ahora, este ProtectedRoute solo verificará si el usuario está logueado. La lógica de roles más específica se manejará dentro de GamePage.tsx.
+Modificar Navbar.tsx:
+
+Añade un nuevo enlace de texto en el Navbar que diga "Trebejos Game" (o "Jugar Tácticas", elige el que suene mejor).
+Este enlace debe ser visible solo si el usuario está logueado (es decir, si user del AuthContext existe).
+Debe apuntar a la nueva ruta /juego.
+El estilo debe ser consistente con los otros enlaces del Navbar.
+Crear Página GamePage.tsx (src/pages/GamePage.tsx - NUEVO ARCHIVO):
+
+Esta página se mostrará en la ruta /juego y estará protegida por ProtectedRoute.
+Debe incluir los componentes Navbar y Footer del proyecto para mantener la consistencia visual.
+Usará el hook useAuth() para obtener user, profile, y loading.
+Lógica de Renderizado Condicional (después de manejar loading y !user como en ProtectedRoute o asumiendo que ProtectedRoute ya lo hizo):
+Determina si el usuario es socio: const esSocio = profile?.roles?.socio === true;
+Contenido de la Página:
+Un título principal, por ejemplo: "Trebejos Game - Entrenamiento de Tácticas".
+Una breve descripción de la sección.
+Botón 1 (Visible para TODOS los usuarios logueados):
+Texto: "Unirse a Sesión (Resolver Tácticas)".
+Usa el componente Button de shadcn/ui (tamaño lg si quieres que destaque).
+Acción al hacer clic (POR AHORA): alert("Accederías como Jugador a Trebejos Game. ¡Integración con game.clubtrebejos.com pendiente!"); (La integración real con game.clubtrebejos.com la haremos después).
+Botón 2 (Visible SOLO si esSocio es true):
+Texto: "Crear/Administrar Sesión (Socios)".
+Usa el Button de shadcn/ui (quizás con variant="outline" o un color secundario).
+Acción al hacer clic (POR AHORA): alert("Accederías como Administrador del Juego (Socio). ¡Integración con game.clubtrebejos.com pendiente!");
+Mensaje para No Socios (Visible si user existe PERO esSocio es false):
+Un párrafo que diga algo como: "¿Quieres crear y dirigir tus propias sesiones de táctica? &lt;Link to="/info-socios" className="text-blue-600 hover:underline">Hazte socio del Club Trebejos&lt;/Link>."
+(Asume que /info-socios es una ruta para una página informativa que Matías creará en el futuro; el Link es de react-router-dom).
+El diseño de esta página debe ser limpio, atractivo y seguir el estilo general del sitio.
+Modificar App.tsx:
+
+Importa los nuevos componentes GamePage y ProtectedRoute.
+Añade la nueva ruta /juego, protegida por ProtectedRoute:
+TypeScript
+
+<Route 
+  path="/juego" 
+  element={
+    <ProtectedRoute>
+      <GamePage />
+    </ProtectedRoute>
+  } 
+/>
+Requisitos Esenciales (Reiteración):
+
+Responsividad total.
+Coherencia de estilo con shadcn/ui y el proyecto.
+Código limpio y bien estructurado en React y TypeScript.

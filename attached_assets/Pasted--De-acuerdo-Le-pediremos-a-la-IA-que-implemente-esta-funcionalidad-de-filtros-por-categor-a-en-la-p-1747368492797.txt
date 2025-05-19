@@ -1,0 +1,47 @@
+¡De acuerdo! Le pediremos a la IA que implemente esta funcionalidad de filtros por categoría en la página de la tienda que ya (supuestamente) ha creado.
+
+Aquí tienes un prompt que puedes usar. Está diseñado para ser claro y darle a la IA todas las pautas necesarias, basándose en el código que ya debería haber generado para la tienda.
+
+Prompt para la IA Externa (Implementación de Filtros de Categoría en la Tienda):
+
+"Hola IA,
+
+Necesitamos mejorar la página /tienda (componente Store.tsx y StoreSection.tsx) que creaste anteriormente para el Club Trebejos. El objetivo es añadir un sistema de filtrado por categorías de productos.
+
+Ya conoces la estructura de la página /tienda, la interfaz Product (con su campo opcional category?: 'Indumentaria' | 'Accesorios' | 'Libros' | 'Juegos' | 'Otros' | ...;), y cómo Store.tsx utiliza useQuery para obtener los productos desde el endpoint de SheetDB y luego los pasa a StoreSection.tsx.
+
+Instrucciones para Implementar los Filtros de Categoría:
+
+Obtención de Categorías Únicas (en src/pages/Store.tsx):
+
+Una vez que los products se hayan cargado exitosamente mediante useQuery, deriva una lista de uniqueCategories a partir del campo product.category. Asegúrate de manejar el caso de productos sin categoría y de que la lista solo contenga valores únicos.
+Estado para el Filtro Activo (en src/pages/Store.tsx):
+
+Introduce un nuevo estado utilizando useState, por ejemplo: const [selectedCategory, setSelectedCategory] = useState<string | null>(null);. null indicará que no hay filtro activo (se muestran todos los productos).
+Interfaz de Usuario para los Filtros (en src/pages/Store.tsx):
+
+Ubicación: Estos filtros deben mostrarse visualmente en la página /tienda, justo encima de donde se renderiza el componente StoreSection (es decir, antes de la cuadrícula de productos).
+Componentes a Utilizar: Usa el componente Button de shadcn/ui para cada opción de filtro.
+Elementos de Filtro:
+Renderiza un botón "Todos". Al hacer clic, debe llamar a setSelectedCategory(null).
+Por cada categoría en la lista uniqueCategories (del paso 1), renderiza un botón con el nombre de la categoría. Al hacer clic, debe llamar a setSelectedCategory('nombreDeLaCategoría').
+Estilo de los Botones de Filtro:
+El botón correspondiente a la selectedCategory actual (o el botón "Todos" si selectedCategory es null) debe tener un estilo distintivo para indicar que está activo (ej. usando variant="default" de shadcn/ui).
+Los demás botones de filtro deben tener un estilo diferente (ej. variant="outline").
+Los botones deben estar dispuestos de forma responsiva (por ejemplo, usando flex-wrap para que se ajusten en varias líneas en pantallas pequeñas) y preferiblemente centrados en su contenedor.
+Lógica de Filtrado de Productos (en src/pages/Store.tsx):
+
+Antes de pasar la lista de products al componente StoreSection, crea una nueva lista derivada (puedes usar useMemo), llamada filteredProducts.
+Esta lista filteredProducts debe contener:
+Todos los products si selectedCategory es null.
+Solo los products cuya product.category coincida con selectedCategory, si una categoría está seleccionada.
+Pasa filteredProducts a StoreSection en lugar de la lista completa de products. (<StoreSection products={filteredProducts} />).
+Manejo de Resultados Vacíos (en src/pages/Store.tsx):
+
+Si filteredProducts está vacío después de aplicar un filtro (es decir, selectedCategory no es null pero no hay productos en esa categoría), muestra un mensaje amigable al usuario, como por ejemplo: "No hay productos en la categoría '[nombre de la categoría seleccionada]'." Esto debe mostrarse en lugar de una StoreSection vacía.
+Requisitos Adicionales (Reiteración de Calidad):
+
+Mantener Responsividad: La nueva sección de filtros y la lista de productos filtrados deben ser completamente responsivas.
+Coherencia Visual: Asegúrate de que los nuevos elementos se integren perfectamente con el estilo existente del sitio y los componentes shadcn/ui.
+Código Limpio: Escribe código TypeScript claro, eficiente y bien estructurado.
+Por favor, modifica src/pages/Store.tsx principalmente para incluir esta lógica de estado, la UI de los filtros y el filtrado de los productos. El componente src/components/StoreSection.tsx debería requerir pocos o ningún cambio, ya que simplemente renderizará la lista de productos que reciba.

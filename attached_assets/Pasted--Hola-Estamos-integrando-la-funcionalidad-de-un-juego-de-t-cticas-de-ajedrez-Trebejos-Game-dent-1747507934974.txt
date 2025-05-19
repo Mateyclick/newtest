@@ -1,0 +1,54 @@
+¡Hola! Estamos integrando la funcionalidad de un juego de tácticas de ajedrez ("Trebejos Game") dentro de nuestro proyecto "Club Trebejos" (el cual ya tienes cargado). Ya hemos avanzado con la autenticación de Socket.IO usando JWT de Supabase en el servidor externo de "Trebejos Game", y "Club Trebejos" tiene un `GameSocketContext.tsx` que provee un socket autenticado.
+
+Ahora, necesitamos tu ayuda para tomar los siguientes componentes de React del "Trebejos Game" original, adaptarlos e integrarlos DENTRO de la estructura de "Club Trebejos".
+
+**Archivos de "Trebejos Game" que te proporcionaremos (código fuente):**
+
+1.  `ChessPuzzleSetup.tsx`
+2.  `PuzzleView.tsx`
+3.  `GameControls.tsx`
+4.  `GameSessionInfo.tsx`
+5.  `WaitingRoom.tsx`
+6.  `ResultsView.tsx`
+7.  `PlayerList.tsx` (si es un archivo separado y relevante)
+
+**Objetivo General de la Adaptación:**
+
+Estos componentes deben ser refactorizados para:
+    a. Funcionar dentro del ecosistema de "Club Trebejos".
+    b. Utilizar el `socket` y el estado `isConnected` provistos por `src/contexts/GameSocketContext.tsx` de "Club Trebejos".
+    c. Convertirse, en su mayoría, en componentes presentacionales o de UI que reciban su estado y callbacks para acciones como props desde su futuro componente padre en "Club Trebejos" (que será `src/pages/GamePage.tsx`).
+    d. No deben contener lógica de creación/gestión de sockets propia.
+    e. La identidad del usuario (ID, email, rol) vendrá implícita del `socket.user` (en el servidor) o del `AuthContext` de "Club Trebejos" y se pasará como prop si es necesario (ej. para `currentPlayerNickname` en `ResultsView`).
+
+**Instrucciones Específicas para la Integración y Modificación EN "Club Trebejos":**
+
+1.  **Ubicación de Archivos:**
+    * Por favor, crea una estructura de carpetas adecuada y lógica dentro de `src/components/` del proyecto "Club Trebejos" para albergar estos componentes adaptados. Por ejemplo, podrías crear `src/components/juego/` y dentro colocar estos archivos, o subcarpetas como `src/components/juego/admin/` y `src/components/juego/jugador/` si lo ves más ordenado. Indícanos la estructura que decidas.
+
+2.  **Adaptación del Código (para cada componente proporcionado):**
+    * **Contexto y Socket:** Reemplaza cualquier uso del `SocketContext` original de "Trebejos Game" por el consumo del `socket` e `isConnected` del `GameSocketContext.tsx` de "Club Trebejos".
+    * **Props vs. Estado Interno:** Analiza qué estado era local en el componente original y qué ahora debería ser manejado por `GamePage.tsx` y pasado como prop. El objetivo es que `GamePage.tsx` sea el orquestador principal del estado del juego.
+    * **Callbacks:** Las acciones que antes emitían eventos de socket directamente (ej. `onLaunch` en `GameControls`) ahora deberían, idealmente, llamar a una función callback pasada por props desde `GamePage.tsx`. Será `GamePage.tsx` quien finalmente haga el `socket.emit()`.
+    * **Identidad del Usuario:** Los nicknames/identificadores de usuario deben basarse en la información del `AuthContext` de "Club Trebejos" o del `socket.user.email` (que `GamePage.tsx` obtendría y pasaría). Ya no se manejarán nicknames de forma independiente como en el "Trebejos Game" original.
+    * **Estilos:** Asegúrate de que los estilos sean compatibles o fácilmente adaptables a Tailwind CSS y shadcn/ui, que son los utilizados en "Club Trebejos". Si hay CSS específico, considera cómo migrarlo o reemplazarlo.
+    * **Importaciones:** Actualiza todas las rutas de importación para que coincidan con la nueva ubicación de los archivos y los contextos/hooks de "Club Trebejos".
+    * **Lógica de Roles (Conceptual):**
+        * `ChessPuzzleSetup.tsx` y `GameControls.tsx` serán usados por usuarios con rol "socio" (esto lo determinará `GamePage.tsx` antes de renderizarlos).
+        * Los demás componentes (`PuzzleView`, `WaitingRoom`, `ResultsView`, `PlayerList`) serán para todos los jugadores en una sesión.
+
+3.  **Componente `GameSessionInfo.tsx` (detalle particular):**
+    * La URL para compartir (`shareableUrl`) debe generarse usando `window.location.origin` pero apuntando a la ruta que usará `GamePage.tsx` para las sesiones de juego en "Club Trebejos" (ej. `/juego/:sessionId`).
+
+**Entregables Esperados (Modificaciones DENTRO del proyecto "Club Trebejos" que tienes cargado):**
+
+1.  Los archivos `.tsx` de los componentes listados, creados/actualizados en su nueva ubicación dentro de `src/components/` de "Club Trebejos".
+2.  Una breve explicación de la estructura de carpetas creada y los cambios más significativos en cada componente.
+3.  Para cada componente adaptado, una lista de las props principales que ahora espera recibir de `GamePage.tsx`.
+4.  Cualquier observación sobre dependencias o sub-componentes de "Trebejos Game" que también necesitaron ser traídos y adaptados.
+
+El objetivo final es que `src/pages/GamePage.tsx` en "Club Trebejos" pueda importar y utilizar estos componentes para construir la interfaz de usuario completa de la funcionalidad del juego de tácticas, manejando el estado principal del juego y la comunicación con el servidor a través del `GameSocketContext.tsx`.
+
+**Paralelamente, recuerda que el `server/index.js` de "Trebejos Game" (el servidor externo) necesita ser refactorizado para usar consistentemente `socket.user.id` (el ID de Supabase del token JWT) como la clave primaria de identidad para los jugadores en `gameSessions` y `session.players`. Este cambio en el backend es fundamental para que estos componentes de frontend adaptados funcionen correctamente.** (Si puedes realizar estos cambios en el servidor o dar directrices claras, sería ideal).
+
+¡Gracias por tu ayuda para esta integración!

@@ -1,0 +1,94 @@
+Hola IA,
+
+Seguimos depurando la función saveTacticsPuzzle en AdminPage.tsx. Hemos confirmado con console.log que la función se ejecuta y el objeto puzzleData se construye correctamente hasta la línea justo antes de la llamada a await supabase.from('tactics_puzzles').insert(puzzleData).select();. Específicamente, vemos el console.log("Sending data to Supabase:", puzzleData);.
+
+El problema es que, después de ese log, sucede lo siguiente:
+
+No se registra ninguna petición POST saliente a la API de Supabase en la pestaña "Network" de las herramientas de desarrollador del navegador.
+No se ejecuta ninguno de los console.log o toast que están programados después de la línea await supabase.from('tactics_puzzles').insert(puzzleData).select(); (ni los de éxito, ni los de error de Supabase, ni el catch general de la función).
+Los datos no se guardan en la tabla tactics_puzzles.
+Parece que la ejecución de JavaScript se detiene o la promesa de supabase.insert() se queda "colgada" o falla de una manera tan temprana o interna que no llega a realizar la petición de red ni a ser capturada por nuestros manejadores de errores.
+
+Contexto Adicional:
+
+El usuario está logueado y su profile.id (usado para created_by_user_id) es válido.
+La tabla tactics_puzzles y sus políticas RLS (permitiendo INSERT para site_admin con created_by_user_id = auth.uid() y is_site_admin() = true) están configuradas en Supabase.
+La función public.is_site_admin() en Supabase está definida y debería funcionar.
+Otras interacciones con Supabase (login, lectura de perfiles) funcionan correctamente.
+Estamos probando en un entorno localhost con Vite.
+El Código de la Función saveTacticsPuzzle:
+
+TypeScript
+
+// PEGA AQUÍ TU FUNCIÓN saveTacticsPuzzle COMPLETA ACTUAL
+// (la versión de AdminPage.tsx que incluye los console.log y el try...catch)
+const saveTacticsPuzzle = async (e: React.FormEvent) => {
+  try {
+    console.log("Form submission started");
+    e.preventDefault();
+    
+    const validationError = validateTacticsPuzzle();
+    if (validationError) {
+      console.log("Validation error:", validationError);
+      toast.error(validationError);
+      return;
+    }
+
+    if (!profile?.id) {
+        toast.error("Error crítico: No se pudo identificar al usuario admin.");
+        console.error("saveTacticsPuzzle: profile.id es nulo o undefined.");
+        return;
+    }
+
+    console.log("Creating puzzle data");
+    const puzzleData = {
+      fen,
+      solution_moves_san: solution,
+      turn,
+      category,
+      difficulty_level: difficulty,
+      description: description || null,
+      source_game_pgn: sourcePgn || null,
+      event_name: event || null,
+      white_player: whitePlayer || null,
+      black_player: blackPlayer || null,
+      white_elo: whiteElo ? parseInt(whiteElo) : null,
+      black_elo: blackElo ? parseInt(blackElo) : null,
+      created_by_user_id: profile.id,
+      is_active: true
+    };
+
+    console.log("Sending data to Supabase:", puzzleData); // ÚLTIMO LOG QUE VEMOS
+    
+    // LA EJECUCIÓN PARECE DETENERSE AQUÍ O DENTRO DE ESTA LLAMADA
+    const { data, error } = await supabase
+      .from('tactics_puzzles')
+      .insert(puzzleData)
+      .select(); 
+
+    // NINGUNO DE LOS SIGUIENTES LOGS O TOASTS APARECEN
+    if (error) {
+      console.error("Supabase error:", error); // NO SE VE
+      toast.error(`Error al guardar el problema: ${error.message}`);
+      return;
+    }
+
+    console.log("Puzzle saved successfully:", data); // NO SE VE
+    toast.success("Problema guardado exitosamente");
+    
+    // Reset form ...
+  } catch (error) { 
+    console.error("Error in saveTacticsPuzzle (catch general):", error); // NO SE VE
+    toast.error("Error inesperado al guardar el problema");
+  }
+};
+Solicitud de Diagnóstico y Corrección:
+Por favor, analiza esta función saveTacticsPuzzle:
+
+Dado que no se realiza una petición de red y la ejecución se detiene después del console.log("Sending data to Supabase:", puzzleData), ¿qué podría estar causando una falla silenciosa en la línea await supabase.from('tactics_puzzles').insert(puzzleData).select(); ANTES de que intente hacer la llamada de red?
+¿Hay algo en el objeto puzzleData o en la forma en que se construye la consulta .insert().select() que podría estar provocando un error interno irrecuperable en el SDK de Supabase en el cliente?
+¿Sugieres alguna forma de envolver la llamada a supabase.insert() con un manejo de errores aún más detallado, o alguna forma de forzar que la promesa devuelva un estado, para entender por qué se está "colgando" o fallando silenciosamente?
+¿Podría ser un problema de configuración del cliente supabase en src/lib/supabase.ts que solo se manifieste con operaciones de escritura como insert pero no con select o auth?
+Proporciona una explicación de la posible causa y, si es posible, el código corregido para saveTacticsPuzzle que nos permita ver la petición de red o al menos capturar un error claro.
+
+¡Gracias!"

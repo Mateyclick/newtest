@@ -1,0 +1,30 @@
+¡Hola! Estamos planificando nuevas funcionalidades para la sección del juego de tácticas en `GamePage.tsx` (específicamente para cuando un usuario "socio" está actuando como anfitrión de una sala). Estas nuevas funcionalidades implican interactuar con los problemas de táctica que ya existen en la aplicación y permitir a los socios guardar los suyos.
+
+Para diseñar esto correctamente, necesitamos entender mejor cómo "Club Trebejos" maneja actualmente los problemas de táctica que son gestionados por el "administrador del sitio" (el que tiene el rol `site_admin`).
+
+Según la información inicial del proyecto, existe:
+* Una tabla en Supabase llamada `tactics_puzzles` donde se almacenan los problemas de táctica (probablemente creados/gestionados por el `site_admin`).
+* Estos problemas pueden tener "TAGs" (ej. "Ataque doble", "Final de peones", "Sacrificios", "Jaque mate en 3").
+
+**Por favor, ¿podrías explicarme, basándote en el código existente de "Club Trebejos" (especialmente lo relacionado con el panel `/admin` si existe, o cualquier otra parte que gestione `tactics_puzzles`):**
+
+1.  **Estructura de Datos de `tactics_puzzles`:**
+    * ¿Cuáles son los campos principales de la tabla `tactics_puzzles` en Supabase? (Ej. `fen`, `solution` o `mainLine`, `tags`, `difficulty`, `name`, `description`, `created_by`, etc.).
+    * ¿Cómo se almacenan los TAGs para cada puzzle? ¿Es un array de strings en una columna, una relación a otra tabla de TAGs, o de alguna otra forma?
+
+2.  **Acceso y Gestión de `tactics_puzzles` por el `site_admin`:**
+    * ¿Cómo accede y gestiona el `site_admin` estos problemas? ¿Existe una interfaz en el frontend (quizás en `/admin`) para crear, editar, o eliminar problemas de `tactics_puzzles`?
+    * Si es así, ¿esta interfaz interactúa directamente con Supabase desde el cliente (usando el SDK de Supabase) o a través de un endpoint de API intermedio?
+
+3.  **Obtención de TAGs:**
+    * ¿Existe alguna forma en el código actual de obtener una lista de todos los TAGs únicos que se han utilizado en `tactics_puzzles`?
+
+4.  **Visualización o Uso Actual:**
+    * ¿Se utilizan estos `tactics_puzzles` en alguna otra parte de "Club Trebejos" actualmente, aparte de la posible gestión por el `site_admin`?
+
+Esta información nos ayudará enormemente a diseñar las nuevas funcionalidades para `GamePage.tsx` de manera que se integren fluidamente con la estructura de datos y los mecanismos existentes en "Club Trebejos" para las tácticas. Particularmente, queremos que los "socios" puedan:
+    a) Cargar problemas de `tactics_puzzles` (filtrados por TAG) en el `ChessPuzzleSetup.tsx`.
+    b) Guardar sus propios problemas (inicialmente privados, en una nueva tabla como `user_saved_tactics`).
+    c) Potencialmente, proponer que una de sus tácticas guardadas se haga pública y se añada a `tactics_puzzles` con los TAGs correspondientes.
+
+¡Cualquier detalle sobre cómo `tactics_puzzles` y los TAGs son manejados actualmente será muy valioso!

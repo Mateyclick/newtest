@@ -1,0 +1,728 @@
+
+
+"Trebejos Game" es una aplicación web interactiva diseñada para que un **Administrador** cree y gestione sesiones de resolución de problemas de táctica de ajedrez en tiempo real para un grupo de **Jugadores**. Los jugadores compiten resolviendo secuencias de jugadas, acumulando puntos que pueden ser influenciados por la corrección y la rapidez de sus respuestas. El objetivo es crear una herramienta educativa y competitiva para mejorar en ajedrez.
+
+
+
+**II. Stack Tecnológico General**
+
+
+
+  * **Frontend:**
+
+
+
+      * **Framework/Librería:** React (con TypeScript)
+
+      * **Bundler/Servidor de Desarrollo:** Vite
+
+      * **Enrutamiento:** `react-router-dom`
+
+      * **Comunicación en Tiempo Real:** `socket.io-client`
+
+      * **Lógica de Ajedrez (Cliente):** `chess.js` (para validación interactiva, movimientos)
+
+      * **Renderizado de Tablero:** `react-chessboard`
+
+      * **Estilos:** Tailwind CSS
+
+      * **Iconos:** `lucide-react`
+
+      * **Gestión de Estado Global (Socket):** React Context API (`SocketContext.tsx`)
+
+
+
+  * **Backend:**
+
+
+
+      * **Entorno de Ejecución:** Node.js
+
+      * **Framework (base para Socket.IO):** Express.js
+
+      * **Comunicación en Tiempo Real:** `socket.io`
+
+      * **Lógica de Ajedrez (Servidor):** `chess.js` (para validar soluciones, aplicar jugadas de la línea principal)
+
+      * **Generación de IDs:** `nanoid`
+
+      * **Logging:** Módulo `fs/promises` de Node.js (para escritura de archivos de log)
+
+
+
+  * **Comunicación:**
+
+
+
+      * La comunicación principal entre el frontend y el backend se realiza a través de **WebSockets**, gestionados por la librería `Socket.IO`. Esto permite interacciones bidireccionales y en tiempo real.
+
+
+
+**III. Estructura de Archivos del Proyecto (Deducida e Inferida)**
+
+
+
+Basándome en los nombres de los archivos y las rutas de importación, la estructura probable es:
+
+
+
+```
+
+trebejos-game/
+
+├── public/                     # Archivos estáticos servidos directamente (ej. favicon, index.html base de Vite)
+
+│   └── index.html
+
+├── src/                        # Código fuente del frontend
+
+│   ├── App.tsx                 # Componente raíz con la definición de rutas
+
+│   ├── main.tsx                # Punto de entrada de la aplicación React (renderiza App)
+
+│   ├── index.css               # (o similar) Estilos globales, configuración de Tailwind
+
+│   │
+
+│   ├── components/             # Componentes reutilizables de la UI
+
+│   │   ├── admin/              # Componentes específicos del panel de administración
+
+│   │   │   ├── ChessPuzzleSetup.tsx
+
+│   │   │   ├── GameControls.tsx
+
+│   │   │   └── GameSessionInfo.tsx
+
+│   │   ├── player/             # Componentes específicos de la vista del jugador
+
+│   │   │   ├── PuzzleView.tsx
+
+│   │   │   ├── ResultsView.tsx
+
+│   │   │   └── WaitingRoom.tsx
+
+│   │   └── shared/             # Componentes usados en múltiples vistas
+
+│   │       └── PlayerList.tsx
+
+│   │
+
+│   ├── context/                # Contextos de React para gestión de estado global
+
+│   │   └── SocketContext.tsx
+
+│   │
+
+│   ├── pages/                  # Componentes que representan las "páginas" o vistas principales
+
+│   │   ├── AdminDashboard.tsx
+
+│   │   ├── Home.tsx
+
+│   │   └── PlayerRoom.tsx
+
+│   │
+
+│   └── assets/                 # (Potencial) Imágenes, fuentes, etc.
+
+│
+
+├── server/                     # Código fuente del backend
+
+│   ├── index.js                # Lógica principal del servidor Socket.IO y Express
+
+│   └── session_activity_log.txt # Archivo de log generado por el servidor
+
+│
+
+├── .env                        # (Potencial) Variables de entorno para configuración
+
+├── .gitignore                  # Archivos y carpetas a ignorar por Git
+
+├── package.json                # Dependencias del proyecto y scripts (npm/yarn)
+
+├── vite.config.ts              # Configuración de Vite
+
+├── tsconfig.json               # Configuración de TypeScript
+
+└── tailwind.config.js          # Configuración de Tailwind CSS
+
+```
+
+
+
+  * Se mencionó un archivo `.htaccess` para el despliegue en Hostinger, que estaría en la raíz del build del frontend o configurado en el servidor de Hostinger.
+
+
+
+**IV. Flujo Funcional Detallado y Cómo lo Hace (Por Pantalla/Rol)**
+
+
+
+**A. Pantalla de Inicio (`pages/Home.tsx`)**
+
+
+
+  * **Qué Hace:**
+
+      * Es la página de aterrizaje.
+
+      * Permite a un usuario:
+
+        1.  **Crear una Nueva Sesión:** Si es un administrador.
+
+        2.  **Unirse a una Sesión Existente:** Si es un jugador.
+
+  * **Cómo lo Hace:**
+
+      * **UI:** Muestra un título, un icono y dos secciones principales o botones.
+
+          * Un botón/enlace "Crear Nueva Sesión (Admin)" que redirige al usuario a la ruta `/admin`.
+
+          * Un formulario para "Unirse a una Sesión de Juego" que contiene:
+
+              * Un campo de entrada para el "ID de Sesión".
+
+              * Un campo de entrada para el "Apodo".
+
+              * Un botón "Unirse a Sesión".
+
+      * **Lógica (Unirse):**
+
+        1.  Utiliza `useState` para manejar los valores de los campos `sessionId` y `nickname`, y para un estado de `error`.
+
+        2.  Utiliza `useNavigate` de `react-router-dom` para la redirección.
+
+        3.  Al enviar el formulario (`handleJoinSession`):
+
+              * Previene el comportamiento por defecto del formulario.
+
+              * Valida que los campos "ID de Sesión" y "Apodo" no estén vacíos. Si lo están, muestra un mensaje de error.
+
+              * Si son válidos, guarda el `nickname` en `sessionStorage` (para persistirlo si el jugador recarga la página dentro de la sala de juego).
+
+              * Navega a la ruta `/game/:sessionId`, donde `:sessionId` es el valor ingresado.
+
+      * **Archivos Involucrados:** `pages/Home.tsx`, `lucide-react` (para iconos).
+
+
+
+**B. Contexto del Socket (`context/SocketContext.tsx`)**
+
+
+
+  * **Qué Hace:**
+
+      * Establece y gestiona la conexión del cliente Socket.IO con el servidor.
+
+      * Provee la instancia del `socket` y el estado de la conexión (`isConnected`) a cualquier componente de la aplicación que lo necesite.
+
+  * **Cómo lo Hace:**
+
+    1.  Utiliza `createContext` para crear `SocketContext`.
+
+    2.  El `SocketProvider` es un componente que envuelve la aplicación (en `main.tsx`).
+
+    3.  Dentro de `SocketProvider`, un `useEffect` se encarga de:
+
+          * Determinar la URL del servidor Socket.IO (localhost para desarrollo, URL de Render para producción; la URL de producción está actualmente vacía, lo que podría ser un error si no se configura dinámicamente en el entorno de Render).
+
+          * Crear una nueva instancia de `socket` usando `io(serverURL)`.
+
+          * Establecer listeners para eventos del socket:
+
+              * `connect`: Actualiza `isConnected` a `true` y loguea la conexión.
+
+              * `disconnect`: Actualiza `isConnected` a `false` y loguea la desconexión.
+
+              * `connect_error`: Loguea errores de conexión y actualiza `isConnected` a `false`.
+
+          * Almacena la instancia del `socket` y el estado `isConnected` usando `useState`.
+
+          * Provee una función de limpieza que desconecta el socket cuando el `SocketProvider` se desmonta.
+
+    4.  Exporta un hook custom `useSocket = () => useContext(SocketContext);` para que los componentes puedan acceder fácilmente al `socket` y a `isConnected`.
+
+  * **Archivos Involucrados:** `context/SocketContext.tsx`, `socket.io-client`.
+
+
+
+**C. Panel de Administración (`pages/AdminDashboard.tsx`)**
+
+
+
+  * **Qué Hace (Rol: Administrador):**
+
+    1.  **Creación de Sesión:**
+
+          * Permite al admin especificar el "Número de Problemas" para la sesión.
+
+          * Al hacer clic en "Crear Sesión", envía esta información al servidor.
+
+    2.  **Información de Sesión:**
+
+          * Una vez creada, muestra el "ID de Sesión" (copiable) para compartir con los jugadores.
+
+          * Muestra el estado actual del juego (ej. "Configurando Problemas", "Problema Activo", "Mostrando Resultados", "Esperando Problema \#X").
+
+          * Muestra el progreso del problema actual (ej. "Problema \#1 de 3").
+
+    3.  **Configuración de Problemas:**
+
+          * Para cada problema de la sesión (según el número definido), permite al admin:
+
+              * Establecer la posición inicial del tablero (FEN).
+
+              * Definir la "Línea Principal del Problema" (secuencia de jugadas en formato SAN).
+
+              * Establecer el "Temporizador" (en segundos) para resolver el problema.
+
+              * Definir los "Puntos" base que otorga el problema.
+
+    4.  **Gestión de Jugadores:**
+
+          * Muestra una lista de "Jugadores Conectados" con sus nombres y puntajes totales acumulados.
+
+    5.  **Control del Juego:**
+
+          * "Lanzar Problema": Inicia el problema actual para todos los jugadores.
+
+          * "Revelar Resultados": Finaliza el problema actual, calcula puntajes y muestra la solución y clasificaciones.
+
+          * "Siguiente Problema": Avanza al siguiente problema configurado.
+
+          * "Reiniciar Sesión": Limpia el estado local del dashboard (no parece haber una acción de "reset" completo en el servidor, más bien se crea una nueva).
+
+    6.  **Monitorización del Progreso:**
+
+          * Muestra el "Progreso de Jugadores" para el problema activo: qué jugador ha intentado qué jugada, si fue correcta, si completó la secuencia, si falló, y el tiempo que va transcurriendo o el tiempo tomado.
+
+  * **Cómo lo Hace:**
+
+      * **Estado Local (`useState`):** Maneja múltiples estados: `sessionCreated`, `sessionId`, `numPuzzles`, `currentPuzzleIndex` (para saber qué problema se está configurando/jugando), `puzzles` (un array que almacena la configuración de cada `PuzzleState`: `position`, `mainLine`, `timer`, `points`), `sessionPlayers` (lista de jugadores con ID, nickname y score), `playerProgress` (un objeto para rastrear el estado detallado de cada jugador en el problema actual), `puzzleActive` (booleano), `showResults` (booleano), `puzzleLaunchedAt` (timestamp para cálculos de tiempo).
+
+      * **Uso del Socket (`useSocket`):**
+
+          * `handleCreateSession`: Si el socket está conectado y la sesión no está creada, emite el evento `create_session` al servidor con `{ numPuzzles }`.
+
+          * **Listeners de Eventos del Servidor (en `useEffect`):**
+
+              * `session_created`: Recibe `{ sessionId }`. Actualiza el estado local `sessionId`, `sessionCreated = true`, e inicializa el array `puzzles` con estructuras por defecto según `numPuzzles`.
+
+              * `player_joined`: Recibe datos del jugador que se unió y la lista actualizada de todos los `players`. Actualiza `sessionPlayers` y añade/actualiza la entrada del jugador en `playerProgress` a un estado inicial "waiting".
+
+              * `player_left`: Recibe datos del jugador que se fue y la lista actualizada. Actualiza `sessionPlayers` y elimina al jugador de `playerProgress`.
+
+              * `admin_player_progress`: Recibe el progreso de un jugador (`playerId`, `nickname`, `attemptedMoveSAN`, `timestamp`, `status: 'solving_correct_step' | 'solving_incorrect_step'`, `opponentMoveSAN?`). Actualiza el `playerProgress` para ese jugador, mostrando la jugada, el estado y el tiempo transcurrido.
+
+              * `player_completed_sequence`: Recibe `{ playerId, nickname, timeTakenMs }`. Actualiza `playerProgress` para ese jugador a "completed" con el tiempo tomado.
+
+              * `player_failed_sequence`: Recibe `{ playerId, nickname, lastAttemptedMove }`. Actualiza `playerProgress` a "failed" con el tiempo actual.
+
+              * `puzzle_launched`: Recibe datos del puzzle. Actualiza `puzzleActive = true`, `showResults = false`, guarda `puzzleLaunchedAt`, y resetea el `playerProgress` de todos los jugadores a "waiting" para el nuevo puzzle.
+
+              * `results_revealed` (IMPORTANTE, como discutimos para arreglar los puntajes): Recibe `{ leaderboard, ... }`. **Actualiza `sessionPlayers` con el `leaderboard` recibido** (que contiene los puntajes totales actualizados). También setea `showResults = true` y `puzzleActive = false`.
+
+      * **Funciones de Interacción (Props para componentes hijos o llamadas directas):**
+
+          * `updatePuzzle(puzzleData)`: Se llama desde `ChessPuzzleSetup`. Actualiza el estado local `puzzles` para el `currentPuzzleIndex` y emite `update_puzzle` al servidor con `{ sessionId, puzzleIndex, puzzle: puzzleData }`.
+
+          * `launchPuzzle()`: Se llama desde `GameControls`. Verifica que el puzzle actual (`puzzles[currentPuzzleIndex]`) tenga FEN y línea principal. Si es así, emite `launch_puzzle` al servidor con `{ sessionId, puzzleIndex }`.
+
+          * `revealResults()`: Se llama desde `GameControls`. Emite `reveal_results` al servidor con `{ sessionId }`. Optimísticamente setea `showResults = true` y `puzzleActive = false` (aunque el listener de `results_revealed` lo confirmará).
+
+          * `nextPuzzle()`: Se llama desde `GameControls`. Si no es el último puzzle, incrementa `currentPuzzleIndex`, resetea `puzzleActive` y `showResults`, y emite `next_puzzle` al servidor.
+
+          * `resetSession()`: Limpia todos los estados locales del dashboard a sus valores iniciales.
+
+      * **Renderizado Condicional:** Muestra diferentes partes de la UI según si la sesión está creada, si un puzzle está activo, o si se muestran resultados.
+
+      * **Componentes Hijos:**
+
+          * `GameSessionInfo`: Muestra `sessionId`, `currentPuzzleIndex`, `totalPuzzles`, y el estado del juego. El `sessionId` es copiable.
+
+          * `ChessPuzzleSetup`: Se renderiza si la sesión está creada. Permite editar el `puzzles[currentPuzzleIndex]`. Está deshabilitado si `puzzleActive` o `showResults` es `true`.
+
+          * `GameControls`: Botones para controlar el flujo del juego. Su estado y acciones dependen de `puzzleActive`, `showResults`, y si es el último problema.
+
+          * `PlayerList`: Muestra la lista de `sessionPlayers` con sus puntajes.
+
+          * **Sección "Progreso Jugadores":** Itera sobre `sessionPlayers` y usa el `playerProgress[player.id]` para mostrar el estado de cada uno durante un puzzle activo (jugada intentada, si fue correcta, si el oponente movió, tiempo, etc.).
+
+  * **Archivos Involucrados:** `pages/AdminDashboard.tsx`, `components/admin/ChessPuzzleSetup.tsx`, `components/admin/GameControls.tsx`, `components/admin/GameSessionInfo.tsx`, `components/shared/PlayerList.tsx`, `context/SocketContext.tsx`.
+
+
+
+**D. Componente `ChessPuzzleSetup.tsx` (Detalle)**
+
+
+
+  * **Qué Hace:** Es el editor que usa el Admin para definir cada problema de ajedrez.
+
+  * **Cómo lo Hace:**
+
+      * **Estado Local:** `game` (instancia de `chess.js` para el tablero actual), `positionForInput` (FEN como string para el input), `mainLineString` (línea principal como string), `timer`, `points`, `selectedPalettePiece` (para colocar piezas), `currentTurn` (turno de las blancas/negras), `isRemoveMode` (para borrar piezas).
+
+      * **Props:** Recibe `puzzle` (la configuración actual del problema desde `AdminDashboard`), `onUpdate` (función callback para notificar a `AdminDashboard` de los cambios), `disabled` (para bloquear la edición).
+
+      * **Sincronización con Props (`useEffect` con dependencia `[puzzle]`):** Cuando la prop `puzzle` cambia (ej. el admin navega a otro problema), el estado interno del componente se actualiza para reflejar los datos de ese nuevo puzzle.
+
+      * **Editor de Tablero (`react-chessboard`):**
+
+          * Muestra el tablero basado en el FEN del estado `game`.
+
+          * `boardWidth` se calcula dinámicamente basado en el ancho del contenedor (`boardWrapperRef`) para hacerlo responsivo.
+
+          * `onPieceDrop (handlePieceMoveOnBoard)`: Permite mover piezas en el tablero *sin* seguir las reglas del ajedrez (modo edición). Actualiza el FEN en el estado `game` y llama a `onUpdate`. Solo funciona si no hay pieza de paleta seleccionada y no está en modo borrar.
+
+          * `onSquareClick (handleSquareClick)`:
+
+              * Si `isRemoveMode` está activo, quita la pieza de la casilla (excepto reyes).
+
+              * Si `selectedPalettePiece` está activo, coloca esa pieza en la casilla.
+
+              * Actualiza el FEN y llama a `onUpdate`.
+
+          * `arePiecesDraggable`: Se controla para permitir arrastrar solo si no está `disabled` y no hay un modo de edición de paleta/borrado activo.
+
+      * **Paleta de Piezas:** Botones para cada tipo y color de pieza. Al seleccionar una, se guarda en `selectedPalettePiece` y se desactiva `isRemoveMode`.
+
+      * **Modo Borrar:** Un botón para activar/desactivar `isRemoveMode`.
+
+      * **Controles de Turno:** Radio buttons para seleccionar quién tiene el turno (Blanco/Negro). Modifica el FEN y llama a `onUpdate`.
+
+      * **Botones de Acción del Tablero:** "Limpiar (Reyes)" (pone solo los reyes), "Pos. Inicial" (posición estándar).
+
+      * **Input FEN:** Permite al admin pegar o escribir un FEN. Al perder el foco (`onBlur`), valida el FEN y actualiza el tablero. Si es inválido, revierte al FEN anterior.
+
+      * **Inputs para Línea Principal, Timer, Puntos:** Campos de texto/número que actualizan los estados `mainLineString`, `timer`, `points` y llaman a `onUpdate` en cada cambio.
+
+  * **Archivos Involucrados:** `components/admin/ChessPuzzleSetup.tsx`, `react-chessboard`, `chess.js`, `lucide-react`.
+
+
+
+**E. Sala de Jugadores (`pages/PlayerRoom.tsx`)**
+
+
+
+  * **Qué Hace (Rol: Jugador):**
+
+    1.  **Unión a la Sesión:** Permite al jugador ingresar su apodo si no está en `sessionStorage`. Se une automáticamente a la sesión si ya tiene el apodo y el ID de la sesión (de la URL).
+
+    2.  **Sala de Espera (`WaitingRoom`):** Mientras no haya un puzzle activo o se estén mostrando resultados, el jugador ve una pantalla de espera que muestra la lista de otros jugadores en la sala y sus puntajes actuales.
+
+    3.  **Vista del Problema (`PuzzleView`):** Cuando el admin lanza un puzzle, esta vista se activa. Muestra:
+
+          * El tablero de ajedrez con la posición del problema.
+
+          * El tiempo restante (contador descendente).
+
+          * Los puntos que vale el problema.
+
+          * Permite al jugador realizar movimientos.
+
+    4.  **Interacción con el Problema:**
+
+          * El jugador intenta la primera jugada de la secuencia.
+
+          * Si es correcta, el servidor responde con la jugada del "oponente" (de la línea principal definida por el admin), y el tablero del jugador se actualiza. El jugador entonces intenta la siguiente jugada de su lado.
+
+          * Este proceso continúa hasta que el jugador completa la secuencia o comete un error.
+
+    5.  **Feedback:** Recibe mensajes de feedback (ej. "¡Correcto\! Oponente jugó...", "Jugada incorrecta...", "¡Secuencia completada\!").
+
+    6.  **Vista de Resultados (`ResultsView`):** Cuando el admin revela los resultados, esta vista se activa. Muestra:
+
+          * La solución completa del problema.
+
+          * El resultado del propio jugador (si su respuesta fue correcta, su respuesta, tiempo tomado, puntos obtenidos en la ronda).
+
+          * Los resultados de todos los jugadores en esa ronda.
+
+          * La tabla de clasificación general actualizada.
+
+    7.  **Transición entre Problemas:** Vuelve a la sala de espera después de ver los resultados, listo para el siguiente puzzle.
+
+  * **Cómo lo Hace:**
+
+      * **Estado Local (`useState`):** `nickname`, `isJoined`, `uiError`, `attemptedAutoJoin`, `players` (para `WaitingRoom`), `initialPuzzleData` (FEN, timer, points del puzzle actual), `currentFEN` (FEN que se actualiza dinámicamente), `puzzleActive`, `endTime` (timestamp para el contador), `sequenceCompleted`, `sequenceFailed`, `showResults`, `results` (datos para `ResultsView`), `feedbackMessage`, `opponentLastMove`.
+
+      * **Obtención de `sessionId`:** Usa `useParams` de `react-router-dom`.
+
+      * **Manejo de Nickname:** Usa `sessionStorage` para recordar el nickname entre recargas.
+
+      * **Uso del Socket (`useSocket`):**
+
+          * Al montar y si hay `nickname` y `sessionId`, emite `join_session`.
+
+          * `handleJoinSession` (para el formulario de nickname) también emite `join_session`.
+
+          * **Listeners de Eventos del Servidor (en `useEffect`):**
+
+              * `session_joined`: Recibe datos de la sesión. Actualiza `isJoined`, `nickname`, `players`, y si hay un puzzle activo, actualiza `initialPuzzleData`, `currentFEN`, `puzzleActive`, `endTime`.
+
+              * `player_joined` (otro jugador): Actualiza la lista `players`.
+
+              * `puzzle_launched`: Recibe `{ puzzle, endTime }`. Actualiza `initialPuzzleData`, `currentFEN`, `puzzleActive = true`, `endTime`. Resetea `showResults`, `results`, `sequenceCompleted`, `sequenceFailed`, etc.
+
+              * `puzzle_step_success_opponent_moved`: Recibe `{ newFEN, opponentMoveSAN, nextStepForPlayer }`. Actualiza `currentFEN`, `opponentLastMove`, y `feedbackMessage`.
+
+              * `puzzle_step_failed`: Recibe `{ attemptedMove }`. Actualiza `feedbackMessage` y `sequenceFailed = true`.
+
+              * `player_completed_sequence`: Si es para el jugador actual, actualiza `feedbackMessage`, `sequenceCompleted = true`. Si viene `finalFEN`, actualiza `currentFEN`.
+
+              * `player_failed_sequence`: Si es para el jugador actual, actualiza `feedbackMessage` y `sequenceFailed = true` (aunque `puzzle_step_failed` ya podría haberlo hecho).
+
+              * `results_revealed`: Recibe `{ solution, leaderboard, playerResults }`. Actualiza `results`, `showResults = true`, `puzzleActive = false`. **Crucial: actualiza el estado `players` con `data.leaderboard` para que `WaitingRoom` muestre los puntajes actualizados.**
+
+              * `advanced_to_next_puzzle`: Resetea estados para el siguiente puzzle (`puzzleActive = false`, `initialPuzzleData = null`, `showResults = false`, etc.), volviendo efectivamente a la `WaitingRoom`.
+
+              * `session_completed`, `admin_disconnected`: Maneja el fin de sesión, podría navegar a Home.
+
+              * `error`: Muestra el `uiError`.
+
+      * **Función `handlePlayerMoveAttempt(moveSAN)`:** Se pasa como prop a `PuzzleView`. Cuando `PuzzleView` la llama, esta función emite `submit_answer` al servidor con `{ sessionId, answer: moveSAN }`.
+
+      * **Renderizado Condicional:**
+
+          * Si `!isJoined && attemptedAutoJoin` y no hay `nickname`, muestra formulario para ingresar apodo.
+
+          * Si `!isConnected`, muestra mensajes de conexión.
+
+          * Si `showResults && results`, renderiza `ResultsView`.
+
+          * Si `puzzleActive && initialPuzzleData && currentFEN`, renderiza `PuzzleView`.
+
+          * Sino (estado por defecto después de unirse o entre puzzles), renderiza `WaitingRoom`.
+
+  * **Archivos Involucrados:** `pages/PlayerRoom.tsx`, `components/player/WaitingRoom.tsx`, `components/player/PuzzleView.tsx`, `components/player/ResultsView.tsx`, `context/SocketContext.tsx`, `lucide-react`.
+
+
+
+**F. Componente `PuzzleView.tsx` (Detalle)**
+
+
+
+  * **Qué Hace:** Es la interfaz donde el jugador ve y resuelve el problema de ajedrez activo.
+
+  * **Cómo lo Hace:**
+
+      * **Props:** Recibe `position` (FEN actual), `points`, `endTime` (timestamp), `onMoveAttempt` (callback), `hasSubmittedOrCompleted`, `puzzleActive`.
+
+      * **Estado Local:** `timeLeft` (para el contador), `selectedSquare` (para el primer clic en la mecánica clic-clic), `possibleMoves` (para resaltar casillas de destino).
+
+      * **Temporizador (`useEffect` con dependencia `[endTime, puzzleActive, calculateTimeLeft]`):**
+
+          * La función `calculateTimeLeft` (definida con `useCallback`) calcula los segundos restantes entre `endTime` y `Date.now()`.
+
+          * El `useEffect` establece un intervalo que llama a `calculateTimeLeft` cada segundo y actualiza `timeLeft` con `setTimeLeft`.
+
+          * El intervalo se limpia si `timeLeft` llega a `0` o si el componente se desmonta.
+
+          * Se muestra `{timeLeft}s` en la UI.
+
+      * **Renderizado del Tablero (`react-chessboard`):**
+
+          * Muestra la `position` (FEN).
+
+          * El `boardWidth` se ajusta dinámicamente según el ancho de la ventana.
+
+          * `arePiecesDraggable` y `isDraggablePiece` se controlan para permitir mover solo si el puzzle está activo, el tiempo no se ha agotado, el jugador no ha completado/fallado, y es su turno.
+
+      * **Interacción del Jugador:**
+
+          * **Arrastrar y Soltar (`onPieceDrop`):**
+
+              * Llama a `attemptUserMove(sourceSquare, targetSquare)`.
+
+              * `attemptUserMove` usa `chess.js` para validar el movimiento en el FEN actual. Si es legal según las reglas del ajedrez (pero no necesariamente la solución del problema), llama a `onMoveAttempt(moveResult.san)` (la prop de `PlayerRoom`).
+
+              * Devuelve `true` o `false` a `react-chessboard` para la animación optimista.
+
+          * **Clic-Clic (`onSquareClick`):**
+
+              * Si no hay `selectedSquare`: si se hace clic en una pieza propia, se guarda como `selectedSquare` y se calculan y resaltan los movimientos posibles (usando `chess.js` y actualizando `possibleMoves` que se pasa a `customSquareStyles`).
+
+              * Si ya hay un `selectedSquare`: se intenta el movimiento desde `selectedSquare` a la casilla actual clicada usando `attemptUserMove`. Se limpia `selectedSquare` y `possibleMoves`.
+
+          * `customSquareStyles`: Se usa para resaltar la `selectedSquare` (amarillo) y los `possibleMoves` (círculos radiales).
+
+      * **Sección de Progreso:** Muestra mensajes básicos al jugador según el estado (`puzzleActive`, `hasSubmittedOrCompleted`, `timeLeft`).
+
+  * **Archivos Involucrados:** `components/player/PuzzleView.tsx`, `react-chessboard`, `chess.js`, `lucide-react`.
+
+
+
+**G. Componente `ResultsView.tsx` (Detalle)**
+
+
+
+  * **Qué Hace:** Muestra los resultados después de que un problema ha terminado y el admin los ha revelado.
+
+  * **Cómo lo Hace:**
+
+      * **Props:** Recibe `solution` (string), `leaderboard` (array de jugadores con nickname y score total), `playerResults` (array con detalles de la ronda para cada jugador), `currentPlayerNickname`.
+
+      * **Renderizado:**
+
+          * **Solución del Problema:** Muestra la `solution`.
+
+          * **Resultado del Jugador Actual:** Encuentra los datos del `currentPlayerResult` en `playerResults` y muestra si su respuesta fue correcta, cuál fue su respuesta, el tiempo tomado y los puntos obtenidos en esa ronda.
+
+          * **Resultados de Todos los Jugadores:** Itera sobre `playerResults` y muestra para cada uno su nickname, si acertó, su respuesta, tiempo y puntos de la ronda.
+
+          * **Tabla de Clasificación:** Itera sobre `leaderboard` (ordenado por puntaje descendente) y muestra la posición, nickname y puntaje total de cada jugador. Resalta al jugador actual y al primer puesto.
+
+  * **Archivos Involucrados:** `components/player/ResultsView.tsx`, `lucide-react`.
+
+
+
+**H. Componente `WaitingRoom.tsx` (Detalle)**
+
+
+
+  * **Qué Hace:** Pantalla que ve el jugador cuando está esperando que comience un problema o entre problemas.
+
+  * **Cómo lo Hace:**
+
+      * **Props:** Recibe `players` (un array de objetos `Player` con `nickname` y `score`). Tiene un valor por defecto `[]` para `players` para evitar errores si la prop llega indefinida.
+
+      * **Renderizado:**
+
+          * Muestra un mensaje como "Esperando el siguiente problema...".
+
+          * Muestra la lista de "Jugadores en la Sala" iterando sobre la prop `players`, mostrando el `nickname` y el `score` de cada uno. Los puntajes aquí reflejan el total acumulado porque `PlayerRoom` actualiza su estado `players` con el `leaderboard` recibido del evento `results_revealed`.
+
+  * **Archivos Involucrados:** `components/player/WaitingRoom.tsx`, `lucide-react`.
+
+
+
+**I. Lógica del Servidor (`server/index.js`) (Detalle Clave)**
+
+
+
+  * **Gestión de Sesiones en Memoria (`gameSessions = new Map()`):**
+
+      * Cada sesión tiene una estructura compleja que almacena toda la información relevante: ID, admin, puzzles, jugadores, estado actual del puzzle, etc. (como se detalló en el resumen técnico y se ve en el código).
+
+  * **Creación de Sesión (`create_session`):**
+
+      * Genera un `sessionId` con `nanoid`.
+
+      * Inicializa `puzzles` como un array de objetos con FEN por defecto ("solo reyes"), `mainLine` vacía, y timer/puntos por defecto.
+
+      * Guarda el `socket.id` del admin.
+
+      * Emite `session_created` al admin.
+
+  * **Unión a Sesión (`join_session`):**
+
+      * Valida `sessionId` y `nickname`.
+
+      * Añade al jugador al `Map` `session.players` con `score` inicial 0 y otros estados de seguimiento del puzzle.
+
+      * Emite `session_joined` al jugador que se une (con datos de la sesión, incluyendo estado del puzzle actual si lo hay y `endTime` calculado) y `player_joined` a toda la sala (con la lista de jugadores actualizada).
+
+  * **Actualización de Puzzle (`update_puzzle`):**
+
+      * El admin envía la nueva configuración para un `puzzleIndex`.
+
+      * El servidor actualiza `session.puzzles[puzzleIndex]`.
+
+      * La `mainLine` recibida como string se normaliza a un array de jugadas SAN (`normalizeMainLineString`).
+
+  * **Lanzamiento de Puzzle (`launch_puzzle`):**
+
+      * Valida que el puzzle tenga FEN y `mainLine`.
+
+      * Establece `session.puzzleActive = true`, `session.currentPuzzleLaunchedAt = Date.now()`.
+
+      * Resetea el estado de intento de cada jugador para este nuevo puzzle (`currentMainLineStep = 0`, `currentAttemptFEN` al FEN inicial del puzzle, etc.).
+
+      * Calcula el `endTime` para el cliente: `session.currentPuzzleLaunchedAt + (puzzleToLaunch.timer * 1000)`.
+
+      * Emite `puzzle_launched` a toda la sala con los datos del puzzle y el `endTime`.
+
+  * **Envío de Respuesta (`submit_answer`):**
+
+      * Este es el núcleo de la lógica del juego.
+
+      * Obtiene al jugador y el puzzle actual.
+
+      * Normaliza la jugada del jugador (`playerSubmittedMoveSAN`).
+
+      * Compara `playerSubmittedMoveSAN` con la jugada esperada `mainLine[player.currentMainLineStep]`.
+
+          * Usa `new Chess(player.currentAttemptFEN)` y `gameInstance.move(playerSubmittedMoveSAN, { sloppy: true })` para validar si la jugada del jugador es legal en su FEN actual y obtener el SAN canónico.
+
+      * **Si la jugada del jugador es correcta:**
+
+          * Actualiza `player.currentAttemptFEN` y `player.currentMainLineStep++`.
+
+          * Si hay una siguiente jugada del oponente en `mainLine`:
+
+              * Obtiene `opponentMoveSAN = mainLine[player.currentMainLineStep]`.
+
+              * Intenta aplicar `opponentMoveSAN` al `player.currentAttemptFEN` usando una nueva instancia de `Chess`.
+
+              * Si la jugada del oponente es válida: actualiza `player.currentAttemptFEN` y `player.currentMainLineStep++`. Emite `puzzle_step_success_opponent_moved` al jugador (con el nuevo FEN y la jugada del oponente).
+
+              * Si después de la jugada del oponente ya no hay más pasos para el jugador (`player.currentMainLineStep >= mainLine.length`), el jugador ha completado la secuencia. Se marca `player.sequenceCompletedSuccessfully = true`, se guarda `player.finalTimestampForSequence`, y se emite `player_completed_sequence` a la sala.
+
+          * Si NO hay siguiente jugada del oponente (la jugada del jugador era la última de la secuencia): se marca `player.sequenceCompletedSuccessfully = true`, se guarda `player.finalTimestampForSequence`, y se emite `player_completed_sequence` a la sala.
+
+      * **Si la jugada del jugador es incorrecta:**
+
+          * Se marca `player.sequenceFailed = true`.
+
+          * Se emite `puzzle_step_failed` al jugador y `player_failed_sequence` a la sala.
+
+      * **Notificación al Admin (`admin_player_progress`):** En todos los casos de intento (correcto, incorrecto, completado), se emite `admin_player_progress` al socket del admin con detalles del intento del jugador.
+
+  * **Revelar Resultados (`reveal_results`):**
+
+      * Establece `session.puzzleActive = false`.
+
+      * Itera sobre `session.players`:
+
+          * Si `player.sequenceCompletedSuccessfully` es `true` y tienen `finalTimestampForSequence` y `currentPuzzleLaunchedAt`:
+
+              * Calcula `timeTakenSeconds = (player.finalTimestampForSequence - session.currentPuzzleLaunchedAt) / 1000`.
+
+              * Aplica una fórmula de bonificación por tiempo: `proportionOfTimeUnused = 1 - (timeTakenSeconds / maxTimeSeconds)`. `finalMultiplier = 1 + (1.0 * proportionOfTimeUnused)`.
+
+              * `pointsAwardedThisRound = basePoints * finalMultiplier`.
+
+              * Actualiza `player.score += pointsAwardedThisRound`.
+
+          * Prepara `playerResultsForEmit` con los detalles de la ronda para cada jugador.
+
+      * Actualiza `session.leaderboard` mapeando `session.players` a `{ id, nickname, score }` y ordenándolo.
+
+      * Emite `results_revealed` a toda la sala con la `solution` (mainLine unida), el `leaderboard` y `playerResultsForEmit`.
+
+  * **Siguiente Problema (`next_puzzle`):**
+
+      * Incrementa `session.currentPuzzleIndex`.
+
+      * Resetea `session.puzzleActive = false`, `currentPuzzleDataForClient = null`, etc.
+
+      * Emite `advanced_to_next_puzzle` a la sala.
+
+      * Si no hay más puzzles, emite `session_completed`.
+
+  * **Desconexiones (`disconnect`):**
+
+      * Si el admin se desconecta, emite `admin_disconnected`.
+
+      * Si un jugador se desconecta, lo elimina de `session.players` y emite `player_left` con la lista actualizada de jugadores.
+
+  * **Logging (`logActivity`):** Escribe eventos importantes (creación de sesión, unión, etc.) en `session_activity_log.txt` con timestamp.
+
+
+
+-----
+
+
+

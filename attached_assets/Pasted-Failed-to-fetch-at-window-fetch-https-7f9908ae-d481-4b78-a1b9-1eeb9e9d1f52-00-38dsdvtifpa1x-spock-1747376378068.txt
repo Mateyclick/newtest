@@ -1,0 +1,40 @@
+Failed to fetch
+at window.fetch (https://7f9908ae-d481-4b78-a1b9-1eeb9e9d1f52-00-38dsdvtifpa1x.spock.replit.dev:5000/__replco/static/devtools/eruda/3.2.3/eruda.js:2:218642)
+at window.fetch (https://cdn.gpteng.co/gptengineer.js:1:1945)
+at ping (https://7f9908ae-d481-4b78-a1b9-1eeb9e9d1f52-00-38dsdvtifpa1x.spock.replit.dev:5000/@vite/client:736:13)
+at waitForSuccessfulPing (https://7f9908ae-d481-4b78-a1b9-1eeb9e9d1f52-00-38dsdvtifpa1x.spock.replit.dev:5000/@vite/client:749:13)
+at WebSocket.<anonymous> (https://7f9908ae-d481-4b78-a1b9-1eeb9e9d1f52-00-38dsdvtifpa1x.spock.replit.dev:5000/@vite/client:561:13)
+Failed to fetch
+at window.fetch (https://7f9908ae-d481-4b78-a1b9-1eeb9e9d1f52-00-38dsdvtifpa1x.spock.replit.dev:5000/__replco/static/devtools/eruda/3.2.3/eruda.js:2:218642)
+at window.fetch (https://cdn.gpteng.co/gptengineer.js:1:1945)
+at ping (https://7f9908ae-d481-4b78-a1b9-1eeb9e9d1f52-00-38dsdvtifpa1x.spock.replit.dev:5000/@vite/client:736:13)
+at waitForSuccessfulPing (https://7f9908ae-d481-4b78-a1b9-1eeb9e9d1f52-00-38dsdvtifpa1x.spock.replit.dev:5000/@vite/client:755:17)
+at async WebSocket.<anonymous> (https://7f9908ae-d481-4b78-a1b9-1eeb9e9d1f52-00-38dsdvtifpa1x.spock.replit.dev:5000/@vite/client:561:7)
+Failed to fetch
+at window.fetch (https://7f9908ae-d481-4b78-a1b9-1eeb9e9d1f52-00-38dsdvtifpa1x.spock.replit.dev:5000/__replco/static/devtools/eruda/3.2.3/eruda.js:2:218642)
+at window.fetch (https://cdn.gpteng.co/gptengineer.js:1:1945)
+at ping (https://7f9908ae-d481-4b78-a1b9-1eeb9e9d1f52-00-38dsdvtifpa1x.spock.replit.dev:5000/@vite/client:736:13)
+at waitForSuccessfulPing (https://7f9908ae-d481-4b78-a1b9-1eeb9e9d1f52-00-38dsdvtifpa1x.spock.replit.dev:5000/@vite/client:755:17)
+at async WebSocket.<anonymous> (https://7f9908ae-d481-4b78-a1b9-1eeb9e9d1f52-00-38dsdvtifpa1x.spock.replit.dev:5000/@vite/client:561:7)
+Failed to fetch
+at window.fetch (https://7f9908ae-d481-4b78-a1b9-1eeb9e9d1f52-00-38dsdvtifpa1x.spock.replit.dev:5000/__replco/static/devtools/eruda/3.2.3/eruda.js:2:218642)
+at window.fetch (https://cdn.gpteng.co/gptengineer.js:1:1945)
+at ping (https://7f9908ae-d481-4b78-a1b9-1eeb9e9d1f52-00-38dsdvtifpa1x.spock.replit.dev:5000/@vite/client:736:13)
+at waitForSuccessfulPing (https://7f9908ae-d481-4b78-a1b9-1eeb9e9d1f52-00-38dsdvtifpa1x.spock.replit.dev:5000/@vite/client:755:17)
+at async WebSocket.<anonymous> (https://7f9908ae-d481-4b78-a1b9-1eeb9e9d1f52-00-38dsdvtifpa1x.spock.replit.dev:5000/@vite/client:561:7)
+Failed to fetch
+Failed to fetch
+Failed to fetch
+Failed to fetch
+Failed to fetch
+Failed to fetch
+Failed to fetch
+Failed to fetch
+Failed to fetch
+Failed to fetch
+Failed to fetch
+Failed to fetch
+Failed to fetch
+Failed to fetch
+Failed to fetch
+Failed to fetch

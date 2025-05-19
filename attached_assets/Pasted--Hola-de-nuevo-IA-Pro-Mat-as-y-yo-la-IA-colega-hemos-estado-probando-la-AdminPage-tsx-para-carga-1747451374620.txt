@@ -1,0 +1,45 @@
+¡Hola de nuevo, IA Pro! Matías y yo (la IA colega) hemos estado probando la AdminPage.tsx para cargar problemas de táctica, ¡y estamos muy cerca!
+
+Contexto del Problema:
+Cuando intentamos guardar un nuevo problema de táctica, la consola del navegador nos muestra un error de Supabase (código 400 Bad Request) con el siguiente mensaje:
+message: 'new row for relation "tactics_puzzles" violates check constraint "tactics_puzzles_difficulty_level_check"'
+
+Hemos identificado que este error ocurre porque la tabla tactics_puzzles en Supabase tiene una restricción CHECK en la columna difficulty_level que solo permite los valores: 'Fácil', 'Medio', 'Difícil', 'Muy Difícil' (en español y con mayúscula inicial).
+
+Sin embargo, el código actual en AdminPage.tsx para el estado difficulty y el componente Select para la dificultad está usando valores en inglés y minúsculas (ej. 'easy', 'medium', 'hard', 'very_hard).
+
+Fragmento Relevante de AdminPage.tsx (Estado y Select de Dificultad):
+
+TypeScript
+
+// Definición de niveles de dificultad actual
+const DIFFICULTY_LEVELS = ['easy', 'medium', 'hard', 'very_hard'] as const;
+// ...
+const [difficulty, setDifficulty] = useState<typeof DIFFICULTY_LEVELS[number]>("medium");
+// ...
+// En el JSX del formulario:
+<Select required value={difficulty} onValueChange={setDifficulty}>
+  <SelectTrigger>
+    <SelectValue placeholder="Seleccionar dificultad" />
+  </SelectTrigger>
+  <SelectContent>
+    <SelectItem value="easy">Fácil</SelectItem>
+    <SelectItem value="medium">Medio</SelectItem>
+    <SelectItem value="hard">Difícil</SelectItem>
+    <SelectItem value="very_hard">Muy Difícil</SelectItem>
+  </SelectContent>
+</Select>
+// ...
+// Y en el objeto puzzleData que se envía a Supabase:
+// difficulty_level: difficulty,
+Solicitud de Corrección:
+Por favor, modifica el archivo src/pages/AdminPage.tsx para solucionar esta discrepancia. Necesitamos que:
+
+La constante DIFFICULTY_LEVELS (si decides mantenerla) y el estado difficulty utilicen los valores que la base de datos espera: 'Fácil', 'Medio', 'Difícil', 'Muy Difícil'.
+Los value de los SelectItem dentro del componente Select para la dificultad también se actualicen para usar estos mismos valores en español y con mayúscula inicial.
+El valor por defecto para el estado difficulty debe ser uno de los valores válidos (ej. "Medio").
+El objetivo es que cuando el administrador seleccione una dificultad en el formulario, el valor enviado a Supabase para la columna difficulty_level sea uno de los permitidos por la restricción CHECK de la base de datos.
+
+Proporciona la versión actualizada de src/pages/AdminPage.tsx con estos cambios.
+
+¡Gracias por tu ayuda para alinear el frontend con nuestra base de datos, colega!"

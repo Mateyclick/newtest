@@ -1,0 +1,54 @@
+Hola IA, ¡gracias por tu trabajo en la AdminPage y ProtectedRoute!
+
+Hemos encontrado un nuevo error al intentar correr la aplicación:
+The requested module '/src/components/ProtectedRoute.tsx' does not provide an export named 'default'
+
+Esto indica que App.tsx (donde usamos <ProtectedRoute>) está intentando importar ProtectedRoute como una exportación por defecto, pero el archivo src/components/ProtectedRoute.tsx no lo está exportando así.
+
+Por favor, realiza los siguientes ajustes:
+
+Corregir la Exportación en src/components/ProtectedRoute.tsx:
+
+Asegúrate de que el componente ProtectedRoute se exporte por defecto. Por ejemplo, si tu componente es una constante, añade export default ProtectedRoute; al final del archivo. O, si es una función, declárala como export default function ProtectedRoute(...) { ... }.
+Mejorar la Lógica de ProtectedRoute.tsx (Sugerencia):
+
+La versión actual de ProtectedRoute que generaste verifica if (!profile) para redirigir. Esto podría ser un poco prematuro si profile está tardando en cargarse desde AuthContext (incluso si user ya existe y loading del contexto es false).
+Te sugiero hacerla más robusta, similar a esto, para manejar explícitamente los estados loading, user, y luego profile.roles para adminOnly:
+TypeScript
+
+// En ProtectedRoute.tsx
+const { user, profile, loading } = useAuth(); // Obtener también user y loading
+
+if (loading) {
+  return (
+    <div className="flex justify-center items-center min-h-screen">
+      <Loader2 className="h-8 w-8 animate-spin" />
+    </div>
+  );
+}
+
+if (!user) { // Si después de cargar, no hay usuario autenticado
+  return <Navigate to="/iniciar-sesion" replace />;
+}
+
+// Si se requiere ser admin y el usuario NO tiene el rol de site_admin
+// (Esto también cubre el caso donde profile aún es null o roles no está definido)
+if (adminOnly && !profile?.roles?.site_admin) {
+  return <Navigate to="/" replace />; // O a una página de "No Autorizado"
+}
+
+// Si es adminOnly pero el perfil (que contiene los roles) aún no ha cargado,
+// podríamos mostrar un loader específico o un mensaje.
+// Este caso es más sutil y depende de cuán rápido se resuelva `profile` en AuthContext
+// después de que `loading` del contexto sea false.
+// if (adminOnly && !profile) {
+//   return <div className="flex justify-center items-center min-h-screen"><p>Verificando permisos de administrador...</p></div>;
+// }
+
+return <>{children}</>; // Si pasa todas las verificaciones, renderiza el contenido protegido
+Por favor, integra esta lógica de manejo de loading, user, y profile?.roles?.site_admin de forma robusta en ProtectedRoute.tsx.
+Resultado Esperado:
+
+El archivo src/components/ProtectedRoute.tsx corregido, con la exportación por defecto y la lógica de protección mejorada.
+Si necesitas hacer algún ajuste en App.tsx para la importación (aunque si ProtectedRoute.tsx exporta por defecto, la importación actual en App.tsx debería estar bien), por favor, indícalo.
+El objetivo es que el error de 'default export' desaparezca y que ProtectedRoute maneje los estados de carga y los roles de forma más completa. ¡Gracias por tu ayuda, colega IA!"

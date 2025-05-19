@@ -1,0 +1,36 @@
+Hola IA,
+
+Necesitamos crear una sección de 'Administración del Sitio' para el Club Trebejos, accesible solo por usuarios con el rol site_admin (definido en profile.roles.site_admin === true). Esta sección se ubicará en una nueva ruta, por ejemplo, /admin.
+
+Esta página de administración debe tener dos funcionalidades principales por ahora:
+
+1. Gestión de Socios:
+
+Un campo para ingresar el email de un usuario ya registrado en el sitio.
+Al buscar el email, mostrar el estado actual de "socio" de ese usuario (si profile.roles.socio es true o false).
+Un botón/toggle para "Hacer Socio" / "Quitar Socio". Esta acción debe actualizar el campo roles.socio del usuario correspondiente en la tabla profiles en Supabase.
+Un campo para ingresar o modificar la fecha de "Socio Hasta" (que corresponde a la columna socio_hasta de tipo date en la tabla profiles). Este campo debe permitir seleccionar una fecha.
+Pregunta para la IA (opcional que lo implemente ahora, pero para que lo sepa): ¿Cómo se podría mostrar al usuario en su página /perfil la fecha de socio_hasta si la tiene definida?
+2. Carga de Problemas de Táctica (a la tabla tactics_puzzles):
+
+Un formulario con los siguientes campos para ingresar un nuevo problema de táctica:
+FEN (Posición Inicial): (Campo de texto, obligatorio) Ej: r1bk3r/p2pBpNp/n4n2/1p1NP2P/6P1/3P4/P1P1K3/q5b1 w - - 0 1
+Solución (en SAN): (Textarea, obligatorio) Ej: 1.Ne7# o 1.Qg5+ hxg5 2.Nxf6#
+Turno de Juego: (Dropdown o Radio Buttons: "Blancas" / "Negras", obligatorio) Corresponde a la columna turn ('w' o 'b').
+Categoría/Tema Principal: (Input de texto o Select si hay predefinidas, obligatorio) Ej: "Jaque Mate en 2", "Ataque Doble". Esto irá al campo themes (que es un array de texto).
+Dificultad (Opcional): (Dropdown: "Fácil", "Medio", "Difícil", "Muy Difícil") Corresponde a difficulty_level.
+Descripción (Opcional): (Textarea) Corresponde a description.
+Campos Extras (Opcionales):
+Partida Origen (PGN o enlace): Corresponde a source_game_pgn.
+Evento: Corresponde a event_name.
+Jugador Blancas: Corresponde a white_player.
+Jugador Negras: Corresponde a black_player.
+ELO Blancas: Corresponde a white_elo.
+ELO Negras: Corresponde a black_elo.
+Un botón "Guardar Problema" que inserte los datos en la tabla tactics_puzzles. El created_by_user_id debe ser el id del súper usuario que está cargando el problema. El campo is_active debe ser true por defecto.
+Requisitos para la Página /admin:
+
+Debe estar protegida por un ProtectedRoute que solo permita el acceso si profile.roles.site_admin === true.
+Debe incluir Navbar y Footer.
+El diseño debe ser limpio, funcional y coherente con el resto del sitio (shadcn/ui, Tailwind).
+Por favor, proporciona el código para la nueva página /admin (y cualquier subcomponente necesario) y las modificaciones a App.tsx para la nueva ruta protegida."

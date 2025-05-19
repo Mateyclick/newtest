@@ -1,0 +1,99 @@
+Hola IA, 
+
+ Necesitamos implementar un sistema de inicio de sesión de usuarios para el proyecto del Club Trebejos utilizando Supabase Authentication con Google como proveedor. El frontend está construido con React, TypeScript, Tailwind CSS, shadcn/ui, y react-router-dom. 
+
+ Objetivo Principal: 
+
+
+
+ Permitir a los usuarios iniciar y cerrar sesión en el sitio web utilizando sus cuentas de Google a través de Supabase. 
+
+ Establecer una estructura básica en el frontend para manejar la información del perfil del usuario, asumiendo que los datos se almacenarán en una tabla profiles en Supabase. 
+
+ Reflejar el estado de autenticación en el Navbar. 
+
+ Instrucciones Detalladas (Código Frontend en React): 
+
+
+
+ Configuración del Cliente Supabase: 
+
+ Integra el SDK de Supabase (@supabase/supabase-js). 
+
+ Crea una instancia del cliente Supabase. Utiliza variables de entorno (o placeholders claramente indicados) para la URL del proyecto Supabase y la anon key pública, ya que Matías (el desarrollador principal) las proveerá. 
+
+ Contexto de Autenticación o Hook Personalizado (ej. useAuth.ts o AuthContext.tsx): 
+
+ Crea un sistema para gestionar y proveer el estado de autenticación del usuario de Supabase en toda la aplicación. 
+
+ Este debe incluir: el objeto session actual, el objeto user (con id, email, user_metadata que podría incluir name y avatar_url de Google), y un estado de carga/inicialización. 
+
+ Debe escuchar los cambios en el estado de autenticación de Supabase (ej. supabase.auth.onAuthStateChange). 
+
+ Flujo de Inicio/Cierre de Sesión: 
+
+ Implementa una función signInWithGoogle que utilice supabase.auth.signInWithOAuth({ provider: 'google' }). 
+
+ Implementa una función signOutUser que utilice supabase.auth.signOut(). 
+
+ Modificación del Navbar.tsx: 
+
+ Consume el contexto/hook de autenticación. 
+
+ Si el usuario no está logueado, muestra un botón "Iniciar Sesión con Google" (usando Button de shadcn/ui). Al hacer clic, debe llamar a signInWithGoogle. 
+
+ Si el usuario está logueado, muestra su user.user_metadata?.name o user.email, y si está disponible user.user_metadata?.avatar_url (en un componente Avatar de shadcn/ui si es posible). También incluye un botón/opción "Cerrar Sesión" que llame a signOutUser. 
+
+ Manejo de Perfiles de Usuario (Lógica Frontend): 
+
+ Define una Interfaz Profile (en src/lib/types/profile.ts - NUEVO ARCHIVO):TypeScript 
+
+
+
+ export interface Profile { 
+
+   id: string; // Coincide con user.id de Supabase Auth 
+
+   email?: string; 
+
+   display_name?: string; 
+
+   avatar_url?: string; 
+
+   // Este campo 'roles' será gestionado por Matías directamente en la BD o con lógica de backend más adelante 
+
+   // roles?: { socio: boolean }; // Ejemplo: { "socio": false } por defecto 
+
+   updated_at?: string; // Opcional, Supabase puede manejarlo 
+
+ } 
+
+ Sincronización con Tabla profiles (Frontend): Cuando un usuario inicia sesión y el onAuthStateChange detecta un nuevo user (especialmente la primera vez):El código frontend debe intentar leer el perfil del usuario desde una tabla en Supabase llamada profiles usando el user.id.const { data, error } = await supabase.from('profiles').select('*').eq('id', user.id).single(); 
+
+ Si el perfil no existe (data es null y no hay error grave), el frontend debe insertar un nuevo registro en la tabla profiles. Este registro debe incluir, como mínimo, el id (que es user.id), email (de user.email), display_name (de user.user_metadata?.full_name o name), y avatar_url (de user.user_metadata?.avatar_url).await supabase.from('profiles').insert([{ id: user.id, email: user.email, display_name: user.user_metadata?.name, avatar_url: user.user_metadata?.avatar_url, /* otros campos con valores por defecto */ }]); 
+
+ Nota para la IA: La creación y estructura exacta de la tabla profiles en la base de datos Postgres de Supabase (con columnas id UUID PRIMARY KEY REFERENCES auth.users(id), email TEXT, display_name TEXT, avatar_url TEXT, roles JSONB, created_at TIMESTAMPTZ, updated_at TIMESTAMPTZ) será manejada por Matías. El código frontend solo debe interactuar con ella como se describe. 
+
+ Página de Perfil de Ejemplo (src/pages/Profile.tsx - NUEVO ARCHIVO): 
+
+ Crea una ruta /perfil. 
+
+ Esta página debe ser protegida: solo accesible si el usuario está logueado (usa el contexto/hook de autenticación para verificar). Si no, redirige o no muestra contenido. 
+
+ Debe mostrar la información del perfil del usuario logueado (obtenida del objeto user del contexto de autenticación y/o leyendo el documento correspondiente de la tabla profiles de Supabase). 
+
+ Requisitos Esenciales (Reiteración): 
+
+
+
+ Responsividad Total. 
+
+ Coherencia de Estilo con shadcn/ui, lucide-react, y los estilos existentes del proyecto. 
+
+ Código Limpio, Modular y Seguro en React y TypeScript. 
+
+ No afectar negativamente ninguna funcionalidad existente.
+
+
+
+Recordatorio: Toda la interacción con Supabase (Autenticación y Base de Datos para perfiles) debe realizarse desde el cliente React, ya que el sitio principal del club se aloja en un entorno de hosting estático sin un backend personalizado para esta tarea.

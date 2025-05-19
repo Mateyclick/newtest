@@ -1,0 +1,126 @@
+¡Matías, la perseverancia es la clave y me alegra que estés listo para seguir dándole! Entiendo que la IA te ha pasado una versión actualizada de AdminPage.tsx con más manejo de errores y la lógica de Promise.race para el timeout, y una modificación a supabase.ts.
+
+Y el resultado de la prueba es:
+
+Los console.log hasta "Sending sanitized data to Supabase:" SÍ aparecen.
+Luego, después de unos 10 segundos, ves el error: AdminPage.tsx:181 Detailed error in saveTacticsPuzzle: {error: Error: Timeout after 10s ...}
+No hay datos guardados en Supabase.
+No ves una petición POST saliente a tactics_puzzles en la pestaña Network.
+Esto es un resultado CLARO y MUY IMPORTANTE.
+
+El Promise.race con el timeoutPromise está funcionando como se esperaba: Está detectando que la promesa original (insertPromise de Supabase) no se resuelve ni se rechaza en 10 segundos, y entonces la timeoutPromise "gana" la carrera y rechaza, lo que dispara tu bloque catch (error).
+La Llamada a Supabase se Está "Colgando": La operación supabase.from('tactics_puzzles').insert(sanitizedPuzzleData).select() se está quedando bloqueada o en un estado indeterminado por más de 10 segundos sin devolver una respuesta o un error que el SDK maneje antes del timeout.
+No hay Petición en Network: Esto sigue siendo el síntoma más extraño si el código llega a ejecutar la línea de supabase.insert(). Si el SDK de Supabase estuviera intentando hacer la petición HTTP y fallara por red, normalmente veríamos el intento en la pestaña Network. Que no aparezca sugiere que el "atasco" o el error está ocurriendo dentro del código del SDK de Supabase antes de que pueda construir y enviar la petición HTTP, o que la petición se inicia pero se aborta de una forma que el navegador no registra completamente.
+Ahora, para el Prompt a la IA:
+
+Ya que la IA te dio este código con el Promise.race, podemos usar ese contexto para pedirle que nos ayude a entender por qué la promesa original (insertPromise) está causando el timeout.
+
+Prompt para la IA Externa (Diagnosticar Timeout en supabase.insert dentro de saveTacticsPuzzle):
+
+"¡Hola IA! Gracias por la versión actualizada de AdminPage.tsx con la sanitización de datos y la lógica de Promise.race con timeout en la función saveTacticsPuzzle. También gracias por los ajustes en supabase.ts.
+
+Hemos probado el formulario de 'Guardar Problema' con estos cambios, y la lógica de timeout ha sido muy útil para el diagnóstico. Esto es lo que observamos en la consola del navegador:
+
+Aparecen los console.log "Form submission started", "Creating puzzle data", y "Sending sanitized data to Supabase:" (con el objeto sanitizedPuzzleData que se ve correctamente formado).
+Después de aproximadamente 10 segundos, se ejecuta el bloque catch (error) de saveTacticsPuzzle y vemos el error: Detailed error in saveTacticsPuzzle: {error: Error: Timeout after 10s ...} Esto confirma que la promesa original insertPromise (la llamada a supabase.from('tactics_puzzles').insert(sanitizedPuzzleData).select()) no se está completando (ni resolviendo ni rechazando con un error de Supabase) dentro del período de 10 segundos.
+Importante: Seguimos sin ver una petición POST saliente a la API de Supabase (al endpoint /rest/v1/tactics_puzzles) en la pestaña "Network" de las herramientas de desarrollador del navegador durante esos 10 segundos.
+Esto sugiere que el problema ocurre dentro del SDK de Supabase o en la preparación de la petición, antes de que se envíe realmente por la red, o que la petición se inicia pero se bloquea de una manera que no es visible en Network y no devuelve un error estándar.
+
+Contexto Adicional:
+
+El usuario administrador (profile.id) es válido y tiene los permisos RLS correctos en Supabase para insertar en tactics_puzzles (la política es WITH CHECK (public.is_site_admin() AND created_by_user_id = auth.uid()), y is_site_admin() funciona).
+La tabla tactics_puzzles existe con las columnas esperadas.
+El cliente supabase en src/lib/supabase.ts ahora está inicializado con:
+TypeScript
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true
+  }
+})
+Otras operaciones con Supabase (login, lectura de perfiles) funcionan.
+Por favor, analiza la siguiente función saveTacticsPuzzle (especialmente la interacción con Supabase) y el supabase.ts:
+
+TypeScript
+
+// --- Contenido de src/lib/supabase.ts ---
+import { createClient } from '@supabase/supabase-js'
+
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true
+  }
+})
+
+// --- Función saveTacticsPuzzle en src/pages/AdminPage.tsx ---
+const saveTacticsPuzzle = async (e: React.FormEvent) => {
+  try {
+    console.log("Form submission started");
+    e.preventDefault();
+    
+    const validationError = validateTacticsPuzzle(); // Asumimos que esta función existe y es correcta
+    if (validationError) {
+      console.log("Validation error:", validationError);
+      toast.error(validationError);
+      return;
+    }
+
+    if (!profile?.id) {
+        toast.error("Error crítico: No se pudo identificar al usuario admin.");
+        console.error("saveTacticsPuzzle: profile.id es nulo o undefined.");
+        return;
+    }
+
+    console.log("Creating puzzle data");
+    const sanitizedPuzzleData = { /* ... objeto con datos sanitizados ... */ }; // La IA ya conoce este objeto
+
+    console.log("Sending sanitized data to Supabase:", sanitizedPuzzleData); // ÚLTIMO LOG ANTES DEL TIMEOUT
+    
+    const insertPromise = supabase
+      .from('tactics_puzzles')
+      .insert(sanitizedPuzzleData)
+      .select();
+
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Timeout after 10s')), 10000);
+    });
+
+    const { data, error } = await Promise.race([
+      insertPromise,
+      timeoutPromise
+    ]) as any;
+
+    if (error) { // Este bloque se ejecuta si timeoutPromise gana o si insertPromise rechaza
+      console.error("Supabase error details:", { /* ... detalles del error ... */ });
+      toast.error(`Error al guardar: ${error.message}`);
+      return;
+    }
+
+    console.log("Puzzle saved successfully:", data);
+    toast.success("Problema guardado exitosamente");
+    
+    // Reset form ...
+  } catch (error: any) { 
+    console.error("Detailed error in saveTacticsPuzzle:", { /* ... detalles del error ... */ });
+    if (error?.message === 'Timeout after 10s') {
+      toast.error("La operación tomó demasiado tiempo. Por favor, intente nuevamente.");
+    } else {
+      toast.error(`Error inesperado: ${error?.message || 'Error desconocido'}`);
+    }
+  }
+};
+Preguntas para la IA:
+
+Dado que la promesa de supabase.insert().select() está sufriendo un timeout y no vemos una petición de red, ¿qué podría estar causando que el SDK de Supabase se "cuelgue" o falle internamente ANTES de enviar la petición?
+¿Hay algo en las opciones de inicialización del cliente Supabase en supabase.ts (las opciones de auth) que podría estar interfiriendo con las operaciones de base de datos como insert de esta manera?
+¿Hay alguna forma de obtener más información de depuración del propio SDK de Supabase cliente para ver en qué etapa interna está fallando antes del timeout?
+¿Sugieres alguna modificación a la forma en que se llama a insert() o a la estructura de sanitizedPuzzleData (asumiendo que las columnas y tipos en la base de datos son correctos) que pueda evitar este "cuelgue"?
+El objetivo es entender por qué la operación de Supabase no se completa y no genera una petición de red visible, y cómo podemos solucionarlo para que la inserción funcione o al menos devuelva un error de Supabase más específico en lugar del timeout.
+
