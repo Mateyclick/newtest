@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useGameSocket } from '@/contexts/GameSocketContext';
 import { useAuth } from '@/contexts/AuthContext';
 import InitialChoiceView from '@/components/game/InitialChoiceView';
-import PlayerView from '@/components/game/PlayerView';
+import PlayerView from '@/components/game/PlayerView.jsx';
 import AdminView from '@/components/game/AdminView';
 
 const GamePage: React.FC = () => {
