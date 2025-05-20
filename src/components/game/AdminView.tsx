@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useGameSocket } from '@/contexts/GameSocketContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useGameSession } from '@/hooks/useGameSession';
 import { Button } from '@/components/ui/button';
 import { AdminPuzzleConfiguration, SolutionLine } from '@/lib/types/game';
 import { PlayerList } from './PlayerList';
+import GameControls from './GameControls';
 import GameSessionInfo from './GameSessionInfo';
 import ChessPuzzleSetup from './ChessPuzzleSetup';
 import PlayerProgressView from './PlayerProgressView';
@@ -42,15 +43,15 @@ const AdminView: React.FC = () => {
         let newConfigs: AdminPuzzleConfiguration[] = [];
         const currentConfigs = [...puzzlesConfig];
 
-        if (puzzlesConfig.length !== numPuzzlesInput || 
+        if (puzzlesConfig.length !== numPuzzlesInput ||
             (gameState.totalPuzzlesInSession > 0 && gameState.totalPuzzlesInSession !== numPuzzlesInput && numPuzzlesInput !== gameState.totalPuzzlesInSession) ||
             (puzzlesConfig.length === 0 && numPuzzlesInput > 0) ) {
-            
+
             console.log(`[AdminView] useEffect[gameState.sessionId, numPuzzlesInput]: (Re)creando ${numPuzzlesInput} puzzles. Actual PuzzlesConfig: ${puzzlesConfig.length}, gameStateTotal: ${gameState.totalPuzzlesInSession}`);
             newConfigs = Array(numPuzzlesInput).fill(null).map((_, index) => {
                 return currentConfigs[index] || createDefaultPuzzle(index);
             });
-            
+
             if (newConfigs.length > numPuzzlesInput) {
                 newConfigs = newConfigs.slice(0, numPuzzlesInput);
             } else {
@@ -90,7 +91,7 @@ const AdminView: React.FC = () => {
 
         const maxAllowedIndex = numPuzzlesInput -1;
 
-        if (targetSetupIndex <= maxAllowedIndex) { 
+        if (targetSetupIndex <= maxAllowedIndex) {
             if(currentPuzzleIndexForSetup !== targetSetupIndex) {
                 setCurrentPuzzleIndexForSetup(targetSetupIndex);
             }
@@ -154,7 +155,7 @@ const AdminView: React.FC = () => {
 
   const handleLaunchConfiguredPuzzle = () => {
     if (!socket || !isConnected || !gameState.sessionId) { setError('No hay conexión o sesión activa.'); return; }
-    
+
     const puzzleIdx = currentPuzzleIndexForSetup;
 
     if (puzzleIdx >= numPuzzlesInput) {
@@ -163,7 +164,7 @@ const AdminView: React.FC = () => {
     if (!puzzlesConfig[puzzleIdx]) {
       setError(`Error: Puzzle #${puzzleIdx + 1} no está configurado. Asegúrate de que esté cargado y bien definido.`); return;
     }
-    
+
     if (!validatePuzzleConfig(puzzlesConfig[puzzleIdx], puzzleIdx)) return;
 
     const puzzleToLaunch = puzzlesConfig[puzzleIdx];
@@ -171,66 +172,86 @@ const AdminView: React.FC = () => {
       position: puzzleToLaunch.position, timer: puzzleToLaunch.timer,
       solutionLines: puzzleToLaunch.solutionLines.map(l => ({ id: l.id, moves: l.moves.trim(), points: l.points, label: l.label }))
     };
-    
+
     console.log(`%c[ADMIN_CLIENT] Emitiendo "launch_puzzle" (P#${puzzleIdx + 1}): ${JSON.stringify(payload, null, 2)}`, 'color: #28a745; font-weight: bold;');
     socket.emit('launch_puzzle', { sessionId: gameState.sessionId, puzzleIndex: puzzleIdx, puzzle: payload });
     setLaunchedPuzzlesHistory(prev => prev.includes(puzzleIdx) ? prev : [...prev, puzzleIdx].sort((a,b) => a-b));
-    setShowResultsView(false); 
-  };
-  
-  const handleShowFinalRanking = () => {
-    if (!gameState.sessionId) { setError('No hay sesión activa.'); return;}
-    setShowResultsView(true); 
-    setGameState(prev => ({ ...prev, isFinalRankingActive: true, puzzleActive: false })); 
+    if (setShowResultsView) setShowResultsView(false);
   };
 
-  const handleRevealResults = () => { 
-    if (!socket || !isConnected) { setError('Error de conexión.'); return; }
-    if (!gameState.sessionId) { setError('Error de sesión.'); return; }
+  const handleShowFinalRanking = () => {
+    if (!gameState.sessionId) { setError('No hay sesión activa.'); return;}
+    if (setShowResultsView) setShowResultsView(true);
+    setGameState(prev => ({ ...prev, isFinalRankingActive: true, puzzleActive: false }));
+  };
+
+  // ESTA ES LA FUNCIÓN QUE NECESITAMOS LOGUEAR DETALLADAMENTE
+  const handleRevealResults = () => {
+    console.log('%c[AdminView] PASO 1: handleRevealResults FUE LLAMADA.', 'color: #007bff; font-weight: bold;');
+
+    if (!socket || !isConnected) {
+      setError('Error de conexión.');
+      console.error('[AdminView] handleRevealResults: SALIENDO - No hay socket o no está conectado.');
+      return;
+    }
+    if (!gameState.sessionId) {
+      setError('Error de sesión.');
+      console.error('[AdminView] handleRevealResults: SALIENDO - No hay ID de sesión.');
+      return;
+    }
+
     const puzzleIndexToReveal = gameState.currentPuzzleServerIndex;
-    if (puzzleIndexToReveal === null) { setError('No hay puzzle activo/terminado para revelar.'); return; }
+    console.log(`%c[AdminView] PASO 2: puzzleIndexToReveal para request_reveal_results es: ${puzzleIndexToReveal}`, 'color: #007bff; font-weight: bold;');
+
+    if (puzzleIndexToReveal === null) {
+      setError('No hay puzzle activo o recientemente terminado para revelar sus resultados.');
+      console.error('[AdminView] handleRevealResults: SALIENDO - puzzleIndexToReveal es null.');
+      return;
+    }
+
     socket.emit('request_reveal_results', { sessionId: gameState.sessionId, puzzleIndex: puzzleIndexToReveal });
+    console.log(`%c[AdminView] PASO 3: Evento "request_reveal_results" emitido al servidor para puzzleIndex: ${puzzleIndexToReveal}`, 'color: #007bff; font-weight: bold;');
     setError(null);
   };
 
-  const handlePuzzleUpdate = (updatedPuzzleConfig: AdminPuzzleConfiguration) => { 
+  const handlePuzzleUpdate = (updatedPuzzleConfig: AdminPuzzleConfiguration) => {
      setPuzzlesConfig(prev => {
       const newConfig = [...prev];
       if (currentPuzzleIndexForSetup >= 0 && currentPuzzleIndexForSetup < newConfig.length && currentPuzzleIndexForSetup < numPuzzlesInput) {
         newConfig[currentPuzzleIndexForSetup] = updatedPuzzleConfig;
-      } else if (currentPuzzleIndexForSetup === newConfig.length && currentPuzzleIndexForSetup < numPuzzlesInput) { 
+      } else if (currentPuzzleIndexForSetup === newConfig.length && currentPuzzleIndexForSetup < numPuzzlesInput) {
         newConfig.push(updatedPuzzleConfig);
       }
-      else { 
+      else {
         console.error(`[AdminView] Índice para actualización de puzzle inválido: ${currentPuzzleIndexForSetup}. ConfigLength: ${newConfig.length}, NumPuzzles: ${numPuzzlesInput}`);
       }
       return newConfig;
     });
   };
-  
+
   const handleResetSession = () => {
     if (socket && isConnected && gameState.sessionId && (gameState.isFinalRankingActive || window.confirm('¿Estás seguro de que quieres reiniciar/terminar esta sesión para todos? Esta acción es irreversible.'))) {
-        socket.emit('terminate_session_request', { sessionId: gameState.sessionId }); 
+        socket.emit('terminate_session_request', { sessionId: gameState.sessionId });
         setGameState(prev => ({
-            ...prev, 
-            sessionId: null, 
-            puzzleActive: false, 
+            ...prev,
+            sessionId: null,
+            puzzleActive: false,
             showResults: false,
-            currentPuzzleServerIndex: null, 
-            isFinalRankingActive: false, 
+            currentPuzzleServerIndex: null,
+            isFinalRankingActive: false,
             totalPuzzlesInSession: 0,
-            lastMoveCorrect: undefined, 
-            pointsAwarded: undefined, 
+            lastMoveCorrect: undefined,
+            pointsAwarded: undefined,
             message: undefined
         }));
-        setShowResultsView(false);
+        if (setShowResultsView) setShowResultsView(false);
         setPuzzlesConfig([]);
         setCurrentPuzzleIndexForSetup(0);
-        setNumPuzzlesInput(3); 
+        setNumPuzzlesInput(3);
         setLaunchedPuzzlesHistory([]);
         setError(null);
-    } else if (!gameState.sessionId) { 
-        setShowResultsView(false);
+    } else if (!gameState.sessionId) {
+        if (setShowResultsView) setShowResultsView(false);
         setPuzzlesConfig([]);
         setCurrentPuzzleIndexForSetup(0);
         setNumPuzzlesInput(3);
@@ -269,27 +290,32 @@ const AdminView: React.FC = () => {
   }
 
   const currentPuzzleForUI = puzzlesConfig[currentPuzzleIndexForSetup];
+  const totalPuzzlesForSession = gameState.totalPuzzlesInSession || numPuzzlesInput;
+  const isLastPuzzleCurrently = gameState.currentPuzzleServerIndex !== null &&
+                                totalPuzzlesForSession > 0 &&
+                                gameState.currentPuzzleServerIndex === totalPuzzlesForSession - 1;
+  const hasPuzzlesBeenPlayedInSession = launchedPuzzlesHistory.length > 0;
 
   return (
     <div className="container mx-auto px-2 sm:px-4 py-6">
       {error && <p className="text-destructive text-sm mb-4 p-3 bg-destructive/10 rounded-md text-center sticky top-2 z-50">{error}</p>}
       <div className="max-w-5xl mx-auto space-y-6">
-        <GameSessionInfo 
-            sessionId={gameState.sessionId} 
+        <GameSessionInfo
+            sessionId={gameState.sessionId}
             currentPuzzleIndex={gameState.currentPuzzleServerIndex !== null ? gameState.currentPuzzleServerIndex : -1}
-            totalPuzzles={gameState.totalPuzzlesInSession || numPuzzlesInput}
-            puzzleActive={gameState.puzzleActive || false} 
-            showResults={gameState.showResults || false} 
+            totalPuzzles={totalPuzzlesForSession}
+            puzzleActive={gameState.puzzleActive || false}
+            showResults={gameState.showResults || false}
         />
-        
+
         {currentPuzzleForUI ? (
           <div className="bg-card text-card-foreground p-4 sm:p-6 rounded-xl shadow-2xl border">
             <h3 className="text-xl sm:text-2xl font-semibold text-primary mb-4 border-b pb-3">
               {`Configurando: Problema #${currentPuzzleIndexForSetup + 1} de ${numPuzzlesInput}`}
-              {gameState.currentPuzzleServerIndex === currentPuzzleIndexForSetup && gameState.puzzleActive && 
+              {gameState.currentPuzzleServerIndex === currentPuzzleIndexForSetup && gameState.puzzleActive &&
                 <span className="text-yellow-500 font-bold animate-pulse ml-2">(ACTIVO EN SESIÓN)</span>
               }
-              {launchedPuzzlesHistory.includes(currentPuzzleIndexForSetup) && 
+              {launchedPuzzlesHistory.includes(currentPuzzleIndexForSetup) &&
                !(gameState.currentPuzzleServerIndex === currentPuzzleIndexForSetup && gameState.puzzleActive) &&
                !(gameState.currentPuzzleServerIndex === currentPuzzleIndexForSetup && gameState.showResults) &&
                 <span className="text-muted-foreground text-sm ml-2">(Ya lanzado, esperando resultados...)</span>
@@ -303,7 +329,7 @@ const AdminView: React.FC = () => {
               onPuzzleUpdate={handlePuzzleUpdate}
               disabled={
                 (gameState.puzzleActive && gameState.currentPuzzleServerIndex === currentPuzzleIndexForSetup) ||
-                (launchedPuzzlesHistory.includes(currentPuzzleIndexForSetup) && 
+                (launchedPuzzlesHistory.includes(currentPuzzleIndexForSetup) &&
                  !(gameState.currentPuzzleServerIndex === currentPuzzleIndexForSetup && gameState.showResults))
               }
             />
@@ -315,29 +341,27 @@ const AdminView: React.FC = () => {
           </div>
         )}
 
-        {/* Mostrar el progreso de los jugadores */}
         <PlayerProgressView playerProgress={playerProgressView} />
 
         <GameControls
-          sessionId={gameState.sessionId}
-          puzzleActive={gameState.puzzleActive}
-          showResults={gameState.showResults}
-          currentPuzzleIndex={gameState.currentPuzzleServerIndex}
-          totalPuzzles={gameState.totalPuzzlesInSession || numPuzzlesInput}
+          puzzleActive={gameState.puzzleActive || false}
+          showResults={gameState.showResults || false}
+          currentPuzzleIndexForSetup={currentPuzzleIndexForSetup}
+          launchedPuzzlesHistory={launchedPuzzlesHistory}
+          isLastPuzzle={isLastPuzzleCurrently}
+          isFinalRankingActive={gameState.isFinalRankingActive || false}
+          hasPuzzlesBeenPlayed={hasPuzzlesBeenPlayedInSession}
           onLaunchPuzzle={handleLaunchConfiguredPuzzle}
-          onRevealResults={handleRevealResults}
+          onRevealResults={handleRevealResults} // ASEGÚRATE QUE ESTO LLAME A LA FUNCIÓN handleRevealResults CORRECTA
           onShowFinalRanking={handleShowFinalRanking}
           onResetSession={handleResetSession}
-          disableLaunch={
-            !currentPuzzleForUI || 
-            (gameState.puzzleActive && gameState.currentPuzzleServerIndex === currentPuzzleIndexForSetup) ||
-            currentPuzzleIndexForSetup >= numPuzzlesInput
-          }
-          // IMPORTANTE: El botón de revelar resultados siempre está disponible cuando hay un puzzle activo
-          disableReveal={!gameState.puzzleActive || gameState.currentPuzzleServerIndex === null}
-          disableFinalRanking={gameState.isFinalRankingActive || !launchedPuzzlesHistory.length}
         />
 
+        {/* CONSOLE LOG CORREGIDO PARA DIAGNÓSTICO */}
+        {(() => {
+          console.log('%c[AdminView Render] sessionPlayers para PlayerList:', 'color: purple; font-weight: bold;', JSON.stringify(sessionPlayers, null, 2));
+          return null; // React espera un nodo renderizable, null está bien.
+        })()}
         <PlayerList players={sessionPlayers} />
       </div>
     </div>

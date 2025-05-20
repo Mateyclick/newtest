@@ -1,16 +1,15 @@
 
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Users, Hourglass } from 'lucide-react';
 import { PlayerList } from './PlayerList';
 
+
 interface WaitingRoomProps {
-  players: Array<{
-    nickname: string;
-    score: number;
-  }>;
-  currentPuzzleIndex?: number;
+  players: Player[]; // <--- CORREGIDO: Ahora usa el tipo Player[]
+  currentPuzzleIndex?: number; // 0-based index del ÚLTIMO puzzle completado/lanzado
   totalPuzzles?: number;
 }
+
 
 const WaitingRoom: React.FC<WaitingRoomProps> = ({ 
   players = [], 

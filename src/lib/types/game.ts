@@ -68,6 +68,7 @@ export interface PlayerCurrentPuzzle {
     points: number; // Puntos máximos o de la línea principal (para mostrar en UI)
     puzzleNumber?: number;
     totalPuzzles?: number;
+    index?: number;  
     hasMultipleSolutions?: boolean; // Indicador visual para el jugador
 }
 

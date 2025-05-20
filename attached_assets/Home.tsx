@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react'; 
 import { useNavigate } from 'react-router-dom';
 import { RssIcon as ChessIcon, Users } from 'lucide-react'; // El icono ChessIcon (originalmente RssIcon) se mantiene, puedes cambiarlo si deseas.
 

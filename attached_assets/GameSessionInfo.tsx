@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react'; 
 import { Copy, CheckCircle2 } from 'lucide-react';
 
 interface GameSessionInfoProps {

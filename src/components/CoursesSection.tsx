@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react'; 
 import { Course } from '@/lib/types/courses';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
